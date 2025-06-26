@@ -4,10 +4,15 @@ import { Child, Schedule, TherapyCoverage } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { isSameWeek } from '@/lib/dateUtils';
 
-export const useTherapyCoverage = (child: Child, selectedWeek: Date): TherapyCoverage[] => {
+export const useTherapyCoverage = (child: Child | null, selectedWeek: Date): TherapyCoverage[] => {
   const { schedules, therapists } = useData();
 
   return useMemo(() => {
+    // Return empty array if no child is selected
+    if (!child) {
+      return [];
+    }
+
     // Get schedules for the child in the selected week
     const weekSchedules = schedules.filter(schedule => 
       schedule.childId === child.id &&

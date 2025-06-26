@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ const ScheduleManagement = () => {
     schedule?: Schedule;
   } | null>(null);
 
-  const therapyCoverage = useTherapyCoverage(selectedChild!, selectedWeek);
+  const therapyCoverage = useTherapyCoverage(selectedChild, selectedWeek);
 
   const handleScheduleClick = (date: Date, time: string, schedule?: Schedule) => {
     if (!selectedChild) return;
