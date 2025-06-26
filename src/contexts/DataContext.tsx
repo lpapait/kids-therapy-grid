@@ -44,6 +44,11 @@ const mockChildren: Child[] = [
         email: 'beatriz@email.com'
       }
     ],
+    weeklyTherapies: [
+      { specialty: 'Fonoaudiologia', hoursRequired: 4 },
+      { specialty: 'Musicoterapia', hoursRequired: 6 },
+      { specialty: 'Terapia Ocupacional', hoursRequired: 3 }
+    ],
     createdAt: new Date(),
     createdBy: '1'
   },
@@ -60,6 +65,10 @@ const mockChildren: Child[] = [
         phone: '(11) 88888-3333',
         email: 'mariana@email.com'
       }
+    ],
+    weeklyTherapies: [
+      { specialty: 'Fisioterapia', hoursRequired: 5 },
+      { specialty: 'Terapia Ocupacional', hoursRequired: 2 }
     ],
     createdAt: new Date(),
     createdBy: '1'

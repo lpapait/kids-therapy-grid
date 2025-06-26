@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +7,11 @@ import { Calendar, Users, Copy, Plus } from 'lucide-react';
 import WeekSelector from '@/components/WeekSelector';
 import WeeklyGrid from '@/components/WeeklyGrid';
 import SessionEditModal from '@/components/SessionEditModal';
+import TherapyCoveragePanel from '@/components/TherapyCoveragePanel';
 import { useData } from '@/contexts/DataContext';
 import { Child, Schedule } from '@/types';
 import { isSameWeek, formatDate } from '@/lib/dateUtils';
+import { useTherapyCoverage } from '@/hooks/useTherapyCoverage';
 
 const ScheduleManagement = () => {
   const { children } = useData();
@@ -21,6 +22,8 @@ const ScheduleManagement = () => {
     time: string;
     schedule?: Schedule;
   } | null>(null);
+
+  const therapyCoverage = useTherapyCoverage(selectedChild!, selectedWeek);
 
   const handleScheduleClick = (date: Date, time: string, schedule?: Schedule) => {
     if (!selectedChild) return;
@@ -112,7 +115,7 @@ const ScheduleManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Grade de agendamentos */}
+      {/* Grid layout with schedule and coverage panel */}
       {selectedChild && (
         <>
           <WeekSelector
@@ -120,25 +123,38 @@ const ScheduleManagement = () => {
             onWeekChange={setSelectedWeek}
           />
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <span>Grade de Agendamentos - {selectedChild.name}</span>
-              </CardTitle>
-              <CardDescription>
-                Clique em qualquer horário para agendar uma nova sessão ou editar uma existente
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <WeeklyGrid
-                selectedWeek={selectedWeek}
-                selectedChild={selectedChild}
-                onScheduleClick={handleScheduleClick}
-                viewMode="schedule"
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Therapy Coverage Panel */}
+            <div className="lg:col-span-1">
+              <TherapyCoveragePanel
+                child={selectedChild}
+                coverageData={therapyCoverage}
               />
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Schedule Grid */}
+            <div className="lg:col-span-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <span>Grade de Agendamentos - {selectedChild.name}</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Clique em qualquer horário para agendar uma nova sessão ou editar uma existente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <WeeklyGrid
+                    selectedWeek={selectedWeek}
+                    selectedChild={selectedChild}
+                    onScheduleClick={handleScheduleClick}
+                    viewMode="schedule"
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </>
       )}
 

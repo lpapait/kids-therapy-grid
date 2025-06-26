@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -17,8 +18,14 @@ export interface Child {
   medications?: string;
   diagnosis: string;
   guardians: Guardian[];
+  weeklyTherapies: WeeklyTherapy[];
   createdAt: Date;
   createdBy: string;
+}
+
+export interface WeeklyTherapy {
+  specialty: string;
+  hoursRequired: number;
 }
 
 export interface Guardian {
@@ -78,6 +85,14 @@ export interface ScheduleChange {
   field: keyof Schedule;
   oldValue: any;
   newValue: any;
+}
+
+export interface TherapyCoverage {
+  specialty: string;
+  hoursRequired: number;
+  hoursScheduled: number;
+  percentage: number;
+  status: 'complete' | 'partial' | 'missing';
 }
 
 export const SPECIALTIES = [

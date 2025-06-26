@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,9 +9,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Child, Guardian } from '@/types';
-import { Users, Plus, Calendar, Phone, Mail } from 'lucide-react';
+import { Child, Guardian, WeeklyTherapy } from '@/types';
+import { Users, Plus, Calendar, Phone, Mail, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import WeeklyTherapiesManager from '@/components/WeeklyTherapiesManager';
 
 const ChildrenManagement = () => {
   const { children, addChild } = useData();
@@ -26,7 +26,8 @@ const ChildrenManagement = () => {
     gender: '' as 'male' | 'female' | '',
     medications: '',
     diagnosis: '',
-    guardians: [{ name: '', relationship: '', phone: '', email: '' }] as Guardian[]
+    guardians: [{ name: '', relationship: '', phone: '', email: '' }] as Guardian[],
+    weeklyTherapies: [] as WeeklyTherapy[]
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,6 +42,7 @@ const ChildrenManagement = () => {
       medications: formData.medications,
       diagnosis: formData.diagnosis,
       guardians: formData.guardians.filter(g => g.name && g.relationship && g.phone),
+      weeklyTherapies: formData.weeklyTherapies,
       createdBy: user.id
     };
 
@@ -58,7 +60,8 @@ const ChildrenManagement = () => {
       gender: '',
       medications: '',
       diagnosis: '',
-      guardians: [{ name: '', relationship: '', phone: '', email: '' }]
+      guardians: [{ name: '', relationship: '', phone: '', email: '' }],
+      weeklyTherapies: []
     });
     
     setIsDialogOpen(false);
@@ -106,11 +109,11 @@ const ChildrenManagement = () => {
               Nova Criança
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Cadastrar Nova Criança</DialogTitle>
               <DialogDescription>
-                Preencha as informações da criança e dos responsáveis
+                Preencha as informações da criança, responsáveis e terapias semanais
               </DialogDescription>
             </DialogHeader>
             
@@ -227,6 +230,11 @@ const ChildrenManagement = () => {
                 ))}
               </div>
 
+              <WeeklyTherapiesManager
+                weeklyTherapies={formData.weeklyTherapies}
+                onChange={(therapies) => setFormData(prev => ({ ...prev, weeklyTherapies: therapies }))}
+              />
+
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
@@ -269,6 +277,28 @@ const ChildrenManagement = () => {
                   <p className="text-sm text-gray-600 bg-yellow-50 p-2 rounded">
                     {child.medications}
                   </p>
+                </div>
+              )}
+
+              {child.weeklyTherapies && child.weeklyTherapies.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center">
+                    <Clock className="h-4 w-4 mr-1" />
+                    Terapias Semanais
+                  </h4>
+                  <div className="space-y-1">
+                    {child.weeklyTherapies.map((therapy, index) => (
+                      <div key={index} className="text-sm bg-purple-50 p-2 rounded flex justify-between">
+                        <span>{therapy.specialty}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {therapy.hoursRequired}h/semana
+                        </Badge>
+                      </div>
+                    ))}
+                    <div className="text-xs text-gray-600 mt-1">
+                      Total: {child.weeklyTherapies.reduce((sum, t) => sum + t.hoursRequired, 0)}h por semana
+                    </div>
+                  </div>
                 </div>
               )}
 
