@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +28,7 @@ const TherapistManagement = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newTherapist: Omit<Therapist, 'id' | 'createdAt'> = {
+    const newTherapist: Omit<Therapist, 'id' | 'createdAt' | 'color'> = {
       name: formData.name,
       licenseNumber: formData.licenseNumber,
       education: formData.education,
@@ -185,8 +184,13 @@ const TherapistManagement = () => {
           <Card key={therapist.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
-                <UserPlus className="h-5 w-5 mr-2 text-green-600" />
-                {therapist.name}
+                <div className="flex items-center space-x-3">
+                  <div 
+                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm" 
+                    style={{ backgroundColor: therapist.color }}
+                  />
+                  <span>{therapist.name}</span>
+                </div>
               </CardTitle>
               <CardDescription>{therapist.professionalType}</CardDescription>
             </CardHeader>
