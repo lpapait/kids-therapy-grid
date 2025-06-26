@@ -2,13 +2,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, User, Activity } from 'lucide-react';
+import { Calendar, Clock, User, Activity, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getWeekDays, getTimeSlots, getDayName } from '@/lib/dateUtils';
 import { getTherapistColorStyles } from '@/lib/therapistColors';
 import { Schedule, Child, Therapist } from '@/types';
 import { useData } from '@/contexts/DataContext';
+import { useTherapistWorkload } from '@/hooks/useTherapistWorkload';
 
 interface WeeklyGridProps {
   selectedWeek: Date;
@@ -63,6 +64,23 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
     }
   };
 
+  // Component to show workload alert
+  const WorkloadAlert: React.FC<{ therapistId: string }> = ({ therapistId }) => {
+    const workloadData = useTherapistWorkload(therapistId, selectedWeek);
+    
+    if (!workloadData || workloadData.status === 'available') return null;
+    
+    return (
+      <div className="absolute top-1 right-1">
+        <AlertTriangle 
+          className={`h-3 w-3 ${
+            workloadData.status === 'overloaded' ? 'text-red-500' : 'text-yellow-500'
+          }`}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white rounded-lg border overflow-hidden">
       <div className="grid grid-cols-8 gap-0">
@@ -98,12 +116,15 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
               return (
                 <div
                   key={`${day.toISOString()}-${time}`}
-                  className="border-b border-r p-3 min-h-[120px] hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border-b border-r p-3 min-h-[120px] hover:bg-gray-50 cursor-pointer transition-colors relative"
                   style={schedule ? colorStyles : {}}
                   onClick={() => onScheduleClick(day, time, schedule || undefined)}
                 >
                   {schedule ? (
                     <div className="space-y-2">
+                      {/* Workload Alert */}
+                      <WorkloadAlert therapistId={schedule.therapistId} />
+                      
                       <div className="flex items-center justify-between">
                         <Badge variant="secondary" className={`text-xs ${getStatusColor(schedule.status)}`}>
                           {getStatusIcon(schedule.status)} {schedule.status === 'scheduled' ? 'Agendado' : 

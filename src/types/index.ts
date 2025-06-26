@@ -43,6 +43,7 @@ export interface Therapist {
   professionalType: string;
   specialties: string[];
   color: string;
+  weeklyWorkloadHours: number;
   createdAt: Date;
 }
 
@@ -93,6 +94,15 @@ export interface TherapyCoverage {
   hoursScheduled: number;
   percentage: number;
   status: 'complete' | 'partial' | 'missing';
+}
+
+export interface TherapistWorkload {
+  therapistId: string;
+  hoursScheduled: number;
+  maxHours: number;
+  percentage: number;
+  status: 'available' | 'near_limit' | 'overloaded';
+  remainingHours: number;
 }
 
 export const SPECIALTIES = [

@@ -9,7 +9,7 @@ interface DataContextType {
   scheduleTemplates: ScheduleTemplate[];
   scheduleHistory: ScheduleHistory[];
   addChild: (child: Omit<Child, 'id' | 'createdAt'>) => void;
-  addTherapist: (therapist: Omit<Therapist, 'id' | 'createdAt' | 'color'>) => void;
+  addTherapist: (therapist: Omit<Therapist, 'id' | 'createdAt' | 'color' | 'weeklyWorkloadHours'>) => void;
   addSchedule: (schedule: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateSchedule: (id: string, updates: Partial<Schedule>, reason?: string) => void;
   addScheduleTemplate: (template: Omit<ScheduleTemplate, 'id'>) => void;
@@ -84,6 +84,7 @@ const mockTherapists: Therapist[] = [
     professionalType: 'Terapeuta Ocupacional',
     specialties: ['Terapia Ocupacional', 'Integração Sensorial'],
     color: '#3B82F6', // Azul
+    weeklyWorkloadHours: 35,
     createdAt: new Date()
   },
   {
@@ -94,6 +95,7 @@ const mockTherapists: Therapist[] = [
     professionalType: 'Fisioterapeuta',
     specialties: ['Fisioterapia', 'Neurologia Pediátrica'],
     color: '#F97316', // Laranja
+    weeklyWorkloadHours: 40,
     createdAt: new Date()
   }
 ];
@@ -133,12 +135,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setChildrenData(prev => [...prev, newChild]);
   };
 
-  const addTherapist = (therapist: Omit<Therapist, 'id' | 'createdAt' | 'color'>) => {
+  const addTherapist = (therapist: Omit<Therapist, 'id' | 'createdAt' | 'color' | 'weeklyWorkloadHours'>) => {
     const existingColors = therapists.map(t => t.color);
     const newTherapist: Therapist = {
       ...therapist,
       id: generateId(),
       color: assignTherapistColor(generateId(), existingColors),
+      weeklyWorkloadHours: 35, // Default workload hours
       createdAt: new Date()
     };
     setTherapists(prev => [...prev, newTherapist]);

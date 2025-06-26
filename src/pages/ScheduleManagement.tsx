@@ -9,13 +9,15 @@ import WeekSelector from '@/components/WeekSelector';
 import WeeklyGrid from '@/components/WeeklyGrid';
 import SessionEditModal from '@/components/SessionEditModal';
 import TherapyCoveragePanel from '@/components/TherapyCoveragePanel';
+import TherapistWorkloadPanel from '@/components/TherapistWorkloadPanel';
 import { useData } from '@/contexts/DataContext';
 import { Child, Schedule } from '@/types';
 import { isSameWeek, formatDate } from '@/lib/dateUtils';
 import { useTherapyCoverage } from '@/hooks/useTherapyCoverage';
+import { useTherapistWorkload } from '@/hooks/useTherapistWorkload';
 
 const ScheduleManagement = () => {
-  const { children } = useData();
+  const { children, getTherapistById } = useData();
   const [selectedWeek, setSelectedWeek] = useState(new Date());
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [editingSession, setEditingSession] = useState<{
@@ -25,6 +27,11 @@ const ScheduleManagement = () => {
   } | null>(null);
 
   const therapyCoverage = useTherapyCoverage(selectedChild, selectedWeek);
+  
+  // Get the therapist from the selected session or null
+  const selectedTherapistId = editingSession?.schedule?.therapistId || null;
+  const selectedTherapist = selectedTherapistId ? getTherapistById(selectedTherapistId) : null;
+  const therapistWorkload = useTherapistWorkload(selectedTherapistId, selectedWeek);
 
   const handleScheduleClick = (date: Date, time: string, schedule?: Schedule) => {
     if (!selectedChild) return;
@@ -125,12 +132,19 @@ const ScheduleManagement = () => {
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Therapy Coverage Panel */}
-            <div className="lg:col-span-1">
+            {/* Side Panel with Coverage and Workload */}
+            <div className="lg:col-span-1 space-y-4">
               <TherapyCoveragePanel
                 child={selectedChild}
                 coverageData={therapyCoverage}
               />
+              
+              {editingSession?.schedule && (
+                <TherapistWorkloadPanel
+                  therapist={selectedTherapist}
+                  workloadData={therapistWorkload}
+                />
+              )}
             </div>
 
             {/* Schedule Grid */}

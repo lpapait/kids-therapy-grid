@@ -10,6 +10,8 @@ import { getTherapistColorStyles } from '@/lib/therapistColors';
 import { Schedule, Therapist } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import WeekSelector from './WeekSelector';
+import TherapistWorkloadPanel from './TherapistWorkloadPanel';
+import { useTherapistWorkload } from '@/hooks/useTherapistWorkload';
 
 interface TherapistWeeklyViewProps {
   therapistId: string;
@@ -24,6 +26,7 @@ const TherapistWeeklyView: React.FC<TherapistWeeklyViewProps> = ({
   const [selectedWeek, setSelectedWeek] = useState(new Date());
   
   const therapist = getTherapistById(therapistId);
+  const therapistWorkload = useTherapistWorkload(therapistId, selectedWeek);
   const weekDays = getWeekDays(selectedWeek);
   const timeSlots = getTimeSlots();
 
@@ -83,6 +86,12 @@ const TherapistWeeklyView: React.FC<TherapistWeeklyViewProps> = ({
         />
       )}
 
+      {/* Therapist Workload Panel */}
+      <TherapistWorkloadPanel
+        therapist={therapist}
+        workloadData={therapistWorkload}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -130,11 +139,18 @@ const TherapistWeeklyView: React.FC<TherapistWeeklyViewProps> = ({
                       const child = schedule ? getChildById(schedule.childId) : null;
                       const colorStyles = schedule ? getTherapistColorStyles(therapist.color, true) : {};
                       
+                      // Add border styling for overloaded therapist
+                      const workloadStyles = therapistWorkload?.status === 'overloaded' && schedule ? {
+                        ...colorStyles,
+                        borderColor: '#EF4444',
+                        borderWidth: '2px'
+                      } : colorStyles;
+                      
                       return (
                         <div
                           key={`${day.toISOString()}-${time}`}
                           className="border-b border-r p-3 min-h-[120px] hover:bg-gray-50 transition-colors"
-                          style={schedule ? colorStyles : {}}
+                          style={schedule ? workloadStyles : {}}
                         >
                           {schedule && child ? (
                             <div className="space-y-2">
