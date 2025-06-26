@@ -81,8 +81,15 @@ const TherapistManagement = () => {
         title: "Terapeuta atualizado com sucesso!",
       })
     } else {
-      // Create new therapist - the context will handle color and weeklyWorkloadHours
-      addTherapist(data);
+      // Create new therapist - ensure data conforms to expected type
+      const therapistData: Omit<Therapist, 'id' | 'createdAt' | 'color' | 'weeklyWorkloadHours'> = {
+        name: data.name,
+        licenseNumber: data.licenseNumber,
+        education: data.education,
+        professionalType: data.professionalType,
+        specialties: data.specialties,
+      };
+      addTherapist(therapistData);
       toast({
         title: "Terapeuta adicionado com sucesso!",
       })
