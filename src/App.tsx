@@ -12,6 +12,7 @@ import Navigation from "@/components/Navigation";
 import Dashboard from "@/components/Dashboard";
 import ChildrenManagement from "@/pages/ChildrenManagement";
 import TherapistManagement from "@/pages/TherapistManagement";
+import ScheduleManagement from "@/pages/ScheduleManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -86,10 +87,7 @@ const AppContent = () => {
         <Route path="/schedule" element={
           <ProtectedRoute>
             <ModeratorRoute>
-              <div className="text-center py-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Agendamentos</h2>
-                <p className="text-gray-600">Funcionalidade em desenvolvimento</p>
-              </div>
+              <ScheduleManagement />
             </ModeratorRoute>
           </ProtectedRoute>
         } />
