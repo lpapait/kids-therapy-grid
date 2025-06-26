@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, User, Activity } from 'lucide-react';
 import { getWeekDays, getTimeSlots, getDayName } from '@/lib/dateUtils';
+import { getTherapistColorStyles } from '@/lib/therapistColors';
 import { Schedule, Therapist } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import WeekSelector from './WeekSelector';
@@ -85,6 +86,10 @@ const TherapistWeeklyView: React.FC<TherapistWeeklyViewProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
+            <div 
+              className="w-5 h-5 rounded-full border-2 border-white shadow-sm" 
+              style={{ backgroundColor: therapist.color }}
+            />
             <User className="h-5 w-5 text-blue-600" />
             <span>Agenda Semanal - {therapist.name}</span>
           </CardTitle>
@@ -123,11 +128,13 @@ const TherapistWeeklyView: React.FC<TherapistWeeklyViewProps> = ({
                     {weekDays.map((day) => {
                       const schedule = getScheduleForSlot(day, time);
                       const child = schedule ? getChildById(schedule.childId) : null;
+                      const colorStyles = schedule ? getTherapistColorStyles(therapist.color, true) : {};
                       
                       return (
                         <div
                           key={`${day.toISOString()}-${time}`}
-                          className="border-b border-r p-3 min-h-[100px] hover:bg-gray-50 transition-colors"
+                          className="border-b border-r p-3 min-h-[120px] hover:bg-gray-50 transition-colors"
+                          style={schedule ? colorStyles : {}}
                         >
                           {schedule && child ? (
                             <div className="space-y-2">
@@ -138,7 +145,11 @@ const TherapistWeeklyView: React.FC<TherapistWeeklyViewProps> = ({
                                 {getStatusIcon(schedule.status)}
                               </Badge>
                               <div className="text-sm space-y-1">
-                                <div className="font-medium text-gray-900">
+                                <div className="font-medium text-gray-900 flex items-center">
+                                  <div 
+                                    className="w-3 h-3 rounded-full mr-1 border" 
+                                    style={{ backgroundColor: therapist.color }}
+                                  />
                                   {child.name}
                                 </div>
                                 <div className="flex items-center text-blue-600 text-xs">

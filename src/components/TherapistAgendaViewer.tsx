@@ -37,11 +37,17 @@ const TherapistAgendaViewer: React.FC = () => {
               <SelectContent>
                 {therapists.map((therapist) => (
                   <SelectItem key={therapist.id} value={therapist.id}>
-                    <div className="flex flex-col">
-                      <span>{therapist.name}</span>
-                      <span className="text-xs text-gray-500">
-                        {therapist.professionalType}
-                      </span>
+                    <div className="flex items-center space-x-2">
+                      <div 
+                        className="w-3 h-3 rounded-full border" 
+                        style={{ backgroundColor: therapist.color }}
+                      />
+                      <div className="flex flex-col">
+                        <span>{therapist.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {therapist.professionalType}
+                        </span>
+                      </div>
                     </div>
                   </SelectItem>
                 ))}
@@ -50,6 +56,10 @@ const TherapistAgendaViewer: React.FC = () => {
             
             {selectedTherapist && (
               <div className="flex items-center space-x-4 p-3 bg-blue-50 rounded-lg">
+                <div 
+                  className="w-4 h-4 rounded-full border-2 border-white shadow-sm" 
+                  style={{ backgroundColor: selectedTherapist.color }}
+                />
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900">{selectedTherapist.name}</h3>
                   <p className="text-sm text-gray-600">{selectedTherapist.professionalType}</p>

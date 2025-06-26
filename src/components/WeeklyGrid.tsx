@@ -6,6 +6,7 @@ import { Calendar, Clock, User, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getWeekDays, getTimeSlots, getDayName } from '@/lib/dateUtils';
+import { getTherapistColorStyles } from '@/lib/therapistColors';
 import { Schedule, Child, Therapist } from '@/types';
 import { useData } from '@/contexts/DataContext';
 
@@ -92,11 +93,13 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
             {weekDays.map((day) => {
               const schedule = getScheduleForSlot(day, time);
               const therapist = schedule ? getTherapistById(schedule.therapistId) : null;
+              const colorStyles = therapist ? getTherapistColorStyles(therapist.color, false) : {};
               
               return (
                 <div
                   key={`${day.toISOString()}-${time}`}
-                  className="border-b border-r p-3 min-h-[100px] hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border-b border-r p-3 min-h-[120px] hover:bg-gray-50 cursor-pointer transition-colors"
+                  style={schedule ? colorStyles : {}}
                   onClick={() => onScheduleClick(day, time, schedule || undefined)}
                 >
                   {schedule ? (
@@ -115,6 +118,10 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
                         </div>
                         {therapist && (
                           <div className="flex items-center text-gray-600 text-xs">
+                            <div 
+                              className="w-3 h-3 rounded-full mr-1 border" 
+                              style={{ backgroundColor: therapist.color }}
+                            />
                             <User className="h-3 w-3 mr-1" />
                             {therapist.name}
                           </div>
