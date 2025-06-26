@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,14 +54,6 @@ const formSchema = z.object({
   specialties: z.array(z.string()).refine((value) => value.length > 0, {
     message: "Você precisa selecionar ao menos uma especialidade.",
   }),
-  color: z.string().regex(/^#([0-9A-Fa-f]{3}){1,2}$/, {
-    message: "Cor deve ser um código hexadecimal válido.",
-  }),
-  weeklyWorkloadHours: z.number().min(1, {
-    message: "Carga horária semanal deve ser maior que zero.",
-  }).max(80, {
-    message: "Carga horária semanal não pode exceder 80 horas.",
-  }),
 })
 
 const TherapistManagement = () => {
@@ -77,8 +70,6 @@ const TherapistManagement = () => {
       education: "",
       professionalType: PROFESSIONAL_TYPES[0],
       specialties: [],
-      color: '#72b9fb',
-      weeklyWorkloadHours: 40,
     },
   })
 
@@ -90,7 +81,7 @@ const TherapistManagement = () => {
         title: "Terapeuta atualizado com sucesso!",
       })
     } else {
-      // Create new therapist
+      // Create new therapist - the context will handle color and weeklyWorkloadHours
       addTherapist(data);
       toast({
         title: "Terapeuta adicionado com sucesso!",
@@ -108,8 +99,6 @@ const TherapistManagement = () => {
     form.setValue("education", therapist.education || "");
     form.setValue("professionalType", therapist.professionalType);
     form.setValue("specialties", therapist.specialties);
-    form.setValue("color", therapist.color);
-    form.setValue("weeklyWorkloadHours", therapist.weeklyWorkloadHours);
     setShowForm(true);
   };
 
@@ -211,48 +200,24 @@ const TherapistManagement = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Especialidades</FormLabel>
-                      <Select
-                        multiple
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione as especialidades" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {SPECIALTIES.map((specialty) => (
-                            <SelectItem key={specialty} value={specialty}>{specialty}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cor</FormLabel>
-                      <FormControl>
-                        <Input type="color" defaultValue={field.value} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="weeklyWorkloadHours"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Carga Horária Semanal</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Carga horária semanal" {...field} />
-                      </FormControl>
+                      <div className="space-y-2">
+                        {SPECIALTIES.map((specialty) => (
+                          <label key={specialty} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={field.value.includes(specialty)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  field.onChange([...field.value, specialty]);
+                                } else {
+                                  field.onChange(field.value.filter(s => s !== specialty));
+                                }
+                              }}
+                            />
+                            <span>{specialty}</span>
+                          </label>
+                        ))}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}

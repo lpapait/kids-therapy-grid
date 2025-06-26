@@ -10,6 +10,8 @@ interface DataContextType {
   scheduleHistory: ScheduleHistory[];
   addChild: (child: Omit<Child, 'id' | 'createdAt'>) => void;
   addTherapist: (therapist: Omit<Therapist, 'id' | 'createdAt' | 'color' | 'weeklyWorkloadHours'>) => void;
+  updateTherapist: (id: string, updates: Partial<Therapist>) => void;
+  deleteTherapist: (id: string) => void;
   addSchedule: (schedule: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateSchedule: (id: string, updates: Partial<Schedule>, reason?: string) => void;
   addScheduleTemplate: (template: Omit<ScheduleTemplate, 'id'>) => void;
@@ -147,6 +149,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTherapists(prev => [...prev, newTherapist]);
   };
 
+  const updateTherapist = (id: string, updates: Partial<Therapist>) => {
+    setTherapists(prev => prev.map(therapist => 
+      therapist.id === id ? { ...therapist, ...updates } : therapist
+    ));
+  };
+
+  const deleteTherapist = (id: string) => {
+    setTherapists(prev => prev.filter(therapist => therapist.id !== id));
+  };
+
   const addSchedule = (schedule: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newSchedule: Schedule = {
       ...schedule,
@@ -227,6 +239,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       scheduleHistory,
       addChild,
       addTherapist,
+      updateTherapist,
+      deleteTherapist,
       addSchedule,
       updateSchedule,
       addScheduleTemplate,
