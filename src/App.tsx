@@ -13,6 +13,7 @@ import Dashboard from "@/components/Dashboard";
 import ChildrenManagement from "@/pages/ChildrenManagement";
 import TherapistManagement from "@/pages/TherapistManagement";
 import ScheduleManagement from "@/pages/ScheduleManagement";
+import TherapistAgenda from "@/pages/TherapistAgenda";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +89,14 @@ const AppContent = () => {
           <ProtectedRoute>
             <ModeratorRoute>
               <ScheduleManagement />
+            </ModeratorRoute>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/therapist-agenda" element={
+          <ProtectedRoute>
+            <ModeratorRoute>
+              <TherapistAgenda />
             </ModeratorRoute>
           </ProtectedRoute>
         } />

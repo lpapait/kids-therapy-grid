@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Heart, LogOut, User, Calendar, Users, UserPlus } from 'lucide-react';
+import { Heart, LogOut, User, Calendar, Users, UserPlus, Eye } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const Navigation = () => {
@@ -21,6 +20,7 @@ const Navigation = () => {
         { path: '/children', label: 'Crianças', icon: Users },
         { path: '/therapists', label: 'Terapeutas', icon: UserPlus },
         { path: '/schedule', label: 'Agendamentos', icon: Calendar },
+        { path: '/therapist-agenda', label: 'Ver Agendas', icon: Eye },
       ]
     : [
         { path: '/dashboard', label: 'Minha Agenda', icon: Calendar },

@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Users, UserPlus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import TherapistWeeklyView from './TherapistWeeklyView';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -165,63 +165,25 @@ const Dashboard = () => {
     );
   }
 
-  // Therapist Dashboard
-  const therapistSchedules = schedules.filter(schedule => schedule.therapistId === user?.id);
-  const therapistTodaySchedules = therapistSchedules.filter(schedule => {
-    const scheduleDate = new Date(schedule.date);
-    return scheduleDate.toDateString() === today.toDateString();
-  });
-
+  // Therapist Dashboard with Weekly View
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Minha Agenda</h1>
-          <p className="text-gray-600">Suas sessões e atendimentos</p>
+          <p className="text-gray-600">Sua agenda semanal de atendimentos</p>
         </div>
         <Badge variant="secondary" className="text-sm">
           Terapeuta
         </Badge>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Sessões de Hoje</CardTitle>
-          <CardDescription>Seus atendimentos programados para hoje</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {therapistTodaySchedules.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">Nenhuma sessão agendada para hoje</p>
-          ) : (
-            <div className="space-y-4">
-              {therapistTodaySchedules.map((schedule) => (
-                <div key={schedule.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{schedule.activity}</h3>
-                    <p className="text-gray-600">
-                      {children.find(c => c.id === schedule.childId)?.name}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Horário: {schedule.time}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <Badge 
-                      variant={
-                        schedule.status === 'completed' ? 'default' :
-                        schedule.status === 'cancelled' ? 'destructive' : 'secondary'
-                      }
-                    >
-                      {schedule.status === 'completed' ? '✅ Concluída' :
-                       schedule.status === 'cancelled' ? '❌ Cancelada' : '⏰ Agendada'}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {user?.id && (
+        <TherapistWeeklyView 
+          therapistId={user.id} 
+          showWeekSelector={true}
+        />
+      )}
     </div>
   );
 };
