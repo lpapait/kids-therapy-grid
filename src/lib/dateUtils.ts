@@ -16,11 +16,10 @@ export const formatWeekRange = (date: Date) => {
 
 export const getTimeSlots = () => {
   const slots = [];
-  for (let hour = 7; hour <= 18; hour++) {
-    slots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 18) {
-      slots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
+  for (let hour = 7; hour <= 17; hour++) {
+    const startTime = `${hour.toString().padStart(2, '0')}:30`;
+    const endTime = `${(hour + 1).toString().padStart(2, '0')}:30`;
+    slots.push(`${startTime}-${endTime}`);
   }
   return slots;
 };

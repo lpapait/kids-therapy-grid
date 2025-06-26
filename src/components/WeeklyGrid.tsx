@@ -85,7 +85,9 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
           <React.Fragment key={time}>
             <div className="bg-gray-50 border-b border-r p-3 text-sm font-medium text-gray-900 flex items-center">
               <Clock className="h-4 w-4 mr-2 text-gray-500" />
-              {time}
+              <div className="text-center">
+                {time}
+              </div>
             </div>
             {weekDays.map((day) => {
               const schedule = getScheduleForSlot(day, time);
@@ -94,11 +96,11 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
               return (
                 <div
                   key={`${day.toISOString()}-${time}`}
-                  className="border-b border-r p-2 min-h-[80px] hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border-b border-r p-3 min-h-[100px] hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={() => onScheduleClick(day, time, schedule || undefined)}
                 >
                   {schedule ? (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Badge variant="secondary" className={`text-xs ${getStatusColor(schedule.status)}`}>
                           {getStatusIcon(schedule.status)} {schedule.status === 'scheduled' ? 'Agendado' : 
@@ -106,8 +108,8 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
                            schedule.status === 'cancelled' ? 'Cancelado' : 'Remarcado'}
                         </Badge>
                       </div>
-                      <div className="text-sm">
-                        <div className="flex items-center text-blue-600 font-medium mb-1">
+                      <div className="text-sm space-y-1">
+                        <div className="flex items-center text-blue-600 font-medium">
                           <Activity className="h-3 w-3 mr-1" />
                           {schedule.activity}
                         </div>
@@ -115,6 +117,11 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
                           <div className="flex items-center text-gray-600 text-xs">
                             <User className="h-3 w-3 mr-1" />
                             {therapist.name}
+                          </div>
+                        )}
+                        {schedule.observations && (
+                          <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                            {schedule.observations}
                           </div>
                         )}
                       </div>

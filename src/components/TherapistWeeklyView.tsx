@@ -116,7 +116,9 @@ const TherapistWeeklyView: React.FC<TherapistWeeklyViewProps> = ({
                 {timeSlots.map((time) => (
                   <React.Fragment key={time}>
                     <div className="bg-gray-50 border-b border-r p-3 text-sm font-medium text-gray-900 flex items-center justify-center">
-                      {time}
+                      <div className="text-center">
+                        {time}
+                      </div>
                     </div>
                     {weekDays.map((day) => {
                       const schedule = getScheduleForSlot(day, time);
@@ -125,7 +127,7 @@ const TherapistWeeklyView: React.FC<TherapistWeeklyViewProps> = ({
                       return (
                         <div
                           key={`${day.toISOString()}-${time}`}
-                          className="border-b border-r p-2 min-h-[80px] hover:bg-gray-50 transition-colors"
+                          className="border-b border-r p-3 min-h-[100px] hover:bg-gray-50 transition-colors"
                         >
                           {schedule && child ? (
                             <div className="space-y-2">
@@ -135,14 +137,19 @@ const TherapistWeeklyView: React.FC<TherapistWeeklyViewProps> = ({
                               >
                                 {getStatusIcon(schedule.status)}
                               </Badge>
-                              <div className="text-sm">
-                                <div className="font-medium text-gray-900 mb-1">
+                              <div className="text-sm space-y-1">
+                                <div className="font-medium text-gray-900">
                                   {child.name}
                                 </div>
                                 <div className="flex items-center text-blue-600 text-xs">
                                   <Activity className="h-3 w-3 mr-1" />
                                   {schedule.activity}
                                 </div>
+                                {schedule.observations && (
+                                  <div className="text-xs text-gray-500 line-clamp-2">
+                                    {schedule.observations}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ) : (
