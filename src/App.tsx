@@ -7,13 +7,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import AppSidebar from "@/components/AppSidebar";
 import LoginForm from "@/components/LoginForm";
-import Navigation from "@/components/Navigation";
 import Dashboard from "@/components/Dashboard";
 import ChildrenManagement from "@/pages/ChildrenManagement";
 import TherapistManagement from "@/pages/TherapistManagement";
 import ScheduleManagement from "@/pages/ScheduleManagement";
 import TherapistAgenda from "@/pages/TherapistAgenda";
+import AuditPage from "@/pages/AuditPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,12 +36,26 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {children}
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <SidebarInset>
+          <div className="flex flex-col min-h-screen">
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+              <SidebarTrigger className="-ml-1" />
+              <div className="mx-auto">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Grade Terapêutica
+                </h2>
+              </div>
+            </header>
+            <main className="flex-1 p-6">
+              {children}
+            </main>
+          </div>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 };
 
@@ -97,6 +113,14 @@ const AppContent = () => {
           <ProtectedRoute>
             <ModeratorRoute>
               <TherapistAgenda />
+            </ModeratorRoute>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/audit" element={
+          <ProtectedRoute>
+            <ModeratorRoute>
+              <AuditPage />
             </ModeratorRoute>
           </ProtectedRoute>
         } />
