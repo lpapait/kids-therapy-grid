@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Users, UserPlus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import TherapistWeeklyView from './TherapistWeeklyView';
+import CapacityMonitorWidget from './CapacityMonitorWidget';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -29,6 +30,11 @@ const Dashboard = () => {
   const completedSessions = thisWeekSchedules.filter(s => s.status === 'completed').length;
   const cancelledSessions = thisWeekSchedules.filter(s => s.status === 'cancelled').length;
 
+  const handleViewCapacityDetails = () => {
+    // Navigate to schedule management or alerts page
+    window.location.href = '/schedule-management';
+  };
+
   if (user?.role === 'moderator') {
     return (
       <div className="space-y-6">
@@ -41,6 +47,12 @@ const Dashboard = () => {
             Moderador
           </Badge>
         </div>
+
+        {/* Widget de Monitoramento de Capacidade */}
+        <CapacityMonitorWidget 
+          selectedWeek={today}
+          onViewDetails={handleViewCapacityDetails}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
@@ -165,7 +177,7 @@ const Dashboard = () => {
     );
   }
 
-  // Therapist Dashboard with Weekly View
+  // Therapist Dashboard with Weekly View  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
