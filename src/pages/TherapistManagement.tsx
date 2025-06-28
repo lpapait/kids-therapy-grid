@@ -36,7 +36,7 @@ import { useCEPLookup } from '@/hooks/useCEPLookup';
 import { therapistFormSchema, type TherapistFormData } from '@/lib/validationSchemas';
 
 import { useData } from '@/contexts/DataContext';
-import { Therapist, PROFESSIONAL_TYPES, SPECIALTIES, Address } from '@/types';
+import { Therapist, PROFESSIONAL_TYPES, SPECIALTIES, Address, WorkSchedule, TimeSlot } from '@/types';
 
 const TherapistManagement = () => {
   const { therapists, addTherapist, updateTherapist, deleteTherapist } = useData();
@@ -97,11 +97,36 @@ const TherapistManagement = () => {
       };
     }
 
+    // Convert workSchedule to proper types
+    let validWorkSchedule: WorkSchedule | undefined = undefined;
+    if (data.workSchedule) {
+      const convertTimeSlots = (slots: { start?: string; end?: string; }[] | undefined): TimeSlot[] => {
+        if (!slots) return [];
+        return slots
+          .filter(slot => slot.start && slot.end)
+          .map(slot => ({
+            start: slot.start!,
+            end: slot.end!
+          }));
+      };
+
+      validWorkSchedule = {
+        monday: convertTimeSlots(data.workSchedule.monday),
+        tuesday: convertTimeSlots(data.workSchedule.tuesday),
+        wednesday: convertTimeSlots(data.workSchedule.wednesday),
+        thursday: convertTimeSlots(data.workSchedule.thursday),
+        friday: convertTimeSlots(data.workSchedule.friday),
+        saturday: convertTimeSlots(data.workSchedule.saturday),
+        sunday: convertTimeSlots(data.workSchedule.sunday)
+      };
+    }
+
     if (editingTherapist) {
       // Update existing therapist
       updateTherapist(editingTherapist.id, {
         ...data,
-        address: validAddress
+        address: validAddress,
+        workSchedule: validWorkSchedule
       });
       toast({
         title: "Terapeuta atualizado com sucesso!",
@@ -118,6 +143,7 @@ const TherapistManagement = () => {
         phone: data.phone,
         email: data.email,
         address: validAddress,
+        workSchedule: validWorkSchedule,
       };
       addTherapist(therapistData);
       toast({
