@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Users, UserPlus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import TherapistWeeklyView from './TherapistWeeklyView';
 import CapacityMonitorWidget from './CapacityMonitorWidget';
+import TherapistAlertsPanel from './TherapistAlertsPanel';
+import TeamCapacityDashboard from './TeamCapacityDashboard';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -35,6 +37,16 @@ const Dashboard = () => {
     window.location.href = '/schedule-management';
   };
 
+  const handleViewTherapist = (therapistId: string) => {
+    // Navigate to therapist agenda
+    window.location.href = `/therapist-agenda?therapistId=${therapistId}`;
+  };
+
+  const handleRedistributeLoad = () => {
+    // Navigate to schedule management with redistribution mode
+    window.location.href = '/schedule-management?mode=redistribute';
+  };
+
   if (user?.role === 'moderator') {
     return (
       <div className="space-y-6">
@@ -48,11 +60,20 @@ const Dashboard = () => {
           </Badge>
         </div>
 
-        {/* Widget de Monitoramento de Capacidade */}
-        <CapacityMonitorWidget 
-          selectedWeek={today}
-          onViewDetails={handleViewCapacityDetails}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <CapacityMonitorWidget 
+              selectedWeek={today}
+              onViewDetails={handleViewCapacityDetails}
+            />
+          </div>
+          <div>
+            <TherapistAlertsPanel 
+              selectedWeek={today}
+              onViewTherapist={handleViewTherapist}
+            />
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
@@ -103,6 +124,12 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        <TeamCapacityDashboard
+          selectedWeek={today}
+          onViewTherapist={handleViewTherapist}
+          onRedistributeLoad={handleRedistributeLoad}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
