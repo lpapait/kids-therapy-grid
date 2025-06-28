@@ -5,9 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Users, TrendingUp, AlertTriangle, Eye, Shuffle } from 'lucide-react';
+import { Users, TrendingUp, AlertTriangle, Eye, Shuffle, Download } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
-import { useTherapistAlerts } from '@/hooks/useTherapistAlerts';
+import { useOptimizedAlerts } from '@/hooks/useOptimizedAlerts';
+import { useCapacityMetrics } from '@/hooks/useCapacityMetrics';
+import { useEnhancedReportExport } from '@/hooks/useEnhancedReportExport';
 import { useToast } from '@/hooks/use-toast';
 
 interface TeamCapacityDashboardProps {
@@ -22,7 +24,9 @@ const TeamCapacityDashboard: React.FC<TeamCapacityDashboardProps> = ({
   onRedistributeLoad
 }) => {
   const { therapists } = useData();
-  const alerts = useTherapistAlerts(selectedWeek);
+  const alerts = useOptimizedAlerts(selectedWeek);
+  const metrics = useCapacityMetrics(selectedWeek);
+  const { exportUtilizationReport, exportCapacityReport } = useEnhancedReportExport();
   const { toast } = useToast();
 
   // Prepare chart data
@@ -67,9 +71,19 @@ const TeamCapacityDashboard: React.FC<TeamCapacityDashboardProps> = ({
     });
   };
 
-  const totalCapacity = therapists.reduce((sum, t) => sum + t.weeklyWorkloadHours, 0);
-  const totalUtilized = alerts.reduce((sum, a) => sum + a.hoursScheduled, 0);
-  const overallUtilization = Math.round((totalUtilized / totalCapacity) * 100);
+  const handleExportReport = async (type: 'utilization' | 'capacity') => {
+    const success = type === 'utilization' 
+      ? await exportUtilizationReport(selectedWeek)
+      : await exportCapacityReport(selectedWeek);
+    
+    if (success) {
+      toast({
+        title: 'Exportação concluída',
+        description: `Relatório de ${type === 'utilization' ? 'utilização' : 'capacidade'} exportado com sucesso`,
+        variant: 'default'
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -83,8 +97,8 @@ const TeamCapacityDashboard: React.FC<TeamCapacityDashboardProps> = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{overallUtilization}%</div>
-            <p className="text-xs text-gray-600">{totalUtilized.toFixed(1)}h / {totalCapacity}h</p>
+            <div className="text-2xl font-bold text-blue-600">{metrics.overallUtilization}%</div>
+            <p className="text-xs text-gray-600">{metrics.totalScheduled}h / {metrics.totalCapacity}h</p>
           </CardContent>
         </Card>
 
@@ -127,7 +141,7 @@ const TeamCapacityDashboard: React.FC<TeamCapacityDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {therapists.length - alerts.length}
+              {metrics.availableTherapists}
             </div>
             <p className="text-xs text-gray-600">Com capacidade livre</p>
           </CardContent>
@@ -139,17 +153,28 @@ const TeamCapacityDashboard: React.FC<TeamCapacityDashboardProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Utilização por Terapeuta</span>
-            {alerts.length > 0 && (
+            <div className="flex space-x-2">
               <Button
                 size="sm"
                 variant="outline"
-                onClick={handleRedistribute}
+                onClick={() => handleExportReport('utilization')}
                 className="flex items-center space-x-2"
               >
-                <Shuffle className="h-4 w-4" />
-                <span>Sugerir Redistribuição</span>
+                <Download className="h-4 w-4" />
+                <span>Exportar</span>
               </Button>
-            )}
+              {alerts.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRedistribute}
+                  className="flex items-center space-x-2"
+                >
+                  <Shuffle className="h-4 w-4" />
+                  <span>Sugerir Redistribuição</span>
+                </Button>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -188,7 +213,18 @@ const TeamCapacityDashboard: React.FC<TeamCapacityDashboardProps> = ({
       {/* Detailed List */}
       <Card>
         <CardHeader>
-          <CardTitle>Detalhamento por Terapeuta</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Detalhamento por Terapeuta</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleExportReport('capacity')}
+              className="flex items-center space-x-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>Exportar Capacidade</span>
+            </Button>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -209,6 +245,11 @@ const TeamCapacityDashboard: React.FC<TeamCapacityDashboardProps> = ({
                       >
                         {data.utilization}%
                       </Badge>
+                      {alert && (
+                        <Badge variant="outline" className="text-xs">
+                          {alert.recommendation}
+                        </Badge>
+                      )}
                     </div>
                     
                     <Progress 

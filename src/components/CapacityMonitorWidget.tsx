@@ -11,9 +11,11 @@ import {
   AlertTriangle, 
   CheckCircle, 
   TrendingUp,
-  Activity
+  Activity,
+  Download
 } from 'lucide-react';
 import { useCapacityMetrics } from '@/hooks/useCapacityMetrics';
+import { useEnhancedReportExport } from '@/hooks/useEnhancedReportExport';
 import { useToast } from '@/hooks/use-toast';
 
 interface CapacityMonitorWidgetProps {
@@ -26,6 +28,7 @@ const CapacityMonitorWidget: React.FC<CapacityMonitorWidgetProps> = ({
   onViewDetails 
 }) => {
   const metrics = useCapacityMetrics(selectedWeek);
+  const { exportCapacityReport } = useEnhancedReportExport();
   const { toast } = useToast();
 
   const getStatusColor = () => {
@@ -52,7 +55,7 @@ const CapacityMonitorWidget: React.FC<CapacityMonitorWidgetProps> = ({
     }
   };
 
-  const handleQuickAction = (action: string) => {
+  const handleQuickAction = async (action: string) => {
     switch (action) {
       case 'redistribute':
         toast({
@@ -68,6 +71,16 @@ const CapacityMonitorWidget: React.FC<CapacityMonitorWidgetProps> = ({
           variant: 'default'
         });
         if (onViewDetails) onViewDetails();
+        break;
+      case 'export_report':
+        const success = await exportCapacityReport(selectedWeek);
+        if (success) {
+          toast({
+            title: 'Relatório exportado',
+            description: 'Relatório de capacidade foi baixado com sucesso.',
+            variant: 'default'
+          });
+        }
         break;
     }
   };
@@ -163,28 +176,39 @@ const CapacityMonitorWidget: React.FC<CapacityMonitorWidgetProps> = ({
         </div>
 
         {/* Ações Rápidas */}
-        {(metrics.status === 'critical' || metrics.status === 'warning') && (
-          <div className="flex space-x-2">
-            {metrics.criticalAlerts > 0 && (
+        <div className="flex space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 text-xs"
+            onClick={() => handleQuickAction('export_report')}
+          >
+            <Download className="h-3 w-3 mr-1" />
+            Exportar
+          </Button>
+          {(metrics.status === 'critical' || metrics.status === 'warning') && (
+            <>
+              {metrics.criticalAlerts > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 text-xs"
+                  onClick={() => handleQuickAction('redistribute')}
+                >
+                  Redistribuir
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="outline"
                 className="flex-1 text-xs"
-                onClick={() => handleQuickAction('redistribute')}
+                onClick={() => handleQuickAction('view_alerts')}
               >
-                Redistribuir
+                Ver Alertas ({metrics.criticalAlerts})
               </Button>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1 text-xs"
-              onClick={() => handleQuickAction('view_alerts')}
-            >
-              Ver Alertas ({metrics.criticalAlerts})
-            </Button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
