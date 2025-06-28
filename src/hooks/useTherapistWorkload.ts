@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { TherapistWorkload } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { isSameWeek } from '@/lib/dateUtils';
+import { BREAK_TIME_MINUTES } from '@/lib/validationRules';
 
 export const useTherapistWorkload = (therapistId: string | null, selectedWeek: Date): TherapistWorkload | null => {
   const { schedules, getTherapistById } = useData();
@@ -20,12 +21,18 @@ export const useTherapistWorkload = (therapistId: string | null, selectedWeek: D
       schedule.status !== 'cancelled'
     );
 
-    // Calculate total hours scheduled using actual durations
+    // Calculate total hours scheduled including break time
     const totalMinutesScheduled = weekSchedules.reduce((total, schedule) => {
-      return total + (schedule.duration || 60); // Default to 60 minutes if not specified
+      const sessionDuration = schedule.duration || 60;
+      // Add break time after each session (except the last one of the day)
+      const breakTime = BREAK_TIME_MINUTES;
+      return total + sessionDuration + breakTime;
     }, 0);
     
-    const hoursScheduled = Math.round((totalMinutesScheduled / 60) * 10) / 10; // Round to 1 decimal
+    // Remove one break time since the last session of the week doesn't need a break after
+    const adjustedMinutes = Math.max(0, totalMinutesScheduled - BREAK_TIME_MINUTES);
+    const hoursScheduled = Math.round((adjustedMinutes / 60) * 10) / 10;
+    
     const maxHours = therapist.weeklyWorkloadHours;
     const percentage = Math.round((hoursScheduled / maxHours) * 100);
     const remainingHours = Math.max(0, maxHours - hoursScheduled);
@@ -39,18 +46,20 @@ export const useTherapistWorkload = (therapistId: string | null, selectedWeek: D
       status = 'available';
     }
 
-    // Generate smart suggestions based on workload status
+    // Generate enhanced suggestions based on workload status and validation rules
     const suggestedActions: string[] = [];
     
     if (status === 'available' && remainingHours > 2) {
       suggestedActions.push('Pode agendar mais sessões');
-      suggestedActions.push(`${remainingHours.toFixed(1)}h disponíveis`);
+      suggestedActions.push(`${remainingHours.toFixed(1)}h disponíveis (incluindo intervalos)`);
     } else if (status === 'near_limit') {
       suggestedActions.push('Considere sessões mais curtas');
-      suggestedActions.push('Planeje com cuidado');
+      suggestedActions.push('Planeje com cuidado - próximo do limite');
+      suggestedActions.push('Verifique intervalos obrigatórios');
     } else if (status === 'overloaded') {
-      suggestedActions.push('Redistribuir algumas sessões');
+      suggestedActions.push('⚠️ Limite excedido - redistribuir sessões');
       suggestedActions.push('Verificar disponibilidade de outros terapeutas');
+      suggestedActions.push('Considerar reagendamento');
     }
 
     return {

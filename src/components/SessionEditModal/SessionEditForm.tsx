@@ -6,6 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Schedule, SESSION_DURATIONS, DURATION_LABELS } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
+import { useScheduleValidation } from '@/hooks/useScheduleValidation';
+import ValidationDisplay from '@/components/ValidationDisplay';
 import SessionBasicFields from './SessionBasicFields';
 import SessionStatusField from './SessionStatusField';
 import SessionObservationsField from './SessionObservationsField';
@@ -48,11 +51,34 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
   onClose
 }) => {
   const { user } = useAuth();
+  const { getTherapistById } = useData();
+  
+  const therapist = formData.therapistId ? getTherapistById(formData.therapistId) : null;
+  
+  // Validate the current form data
+  const validation = useScheduleValidation(
+    {
+      ...formData,
+      id: schedule?.id,
+      childId: schedule?.childId,
+      date,
+      time
+    },
+    therapist,
+    date,
+    time,
+    formData.duration
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.activity || !formData.therapistId || !formData.duration) {
+      return;
+    }
+
+    // Check validation before submitting
+    if (!validation.isValid) {
       return;
     }
 
@@ -106,6 +132,11 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
         </Select>
       </div>
 
+      {/* Validation Display */}
+      {formData.therapistId && (
+        <ValidationDisplay validation={validation} />
+      )}
+
       {schedule && (
         <SessionStatusField
           status={formData.status}
@@ -139,7 +170,11 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
           <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit">
+          <Button 
+            type="submit" 
+            disabled={!validation.isValid}
+            className={!validation.isValid ? 'opacity-50 cursor-not-allowed' : ''}
+          >
             {schedule ? 'Atualizar' : 'Criar'} Sessão
           </Button>
         </div>
