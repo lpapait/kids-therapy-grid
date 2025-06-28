@@ -2,7 +2,7 @@
 import React from 'react';
 import { Child, Therapist, TherapistWorkload, TherapyCoverage } from '@/types';
 import TherapyCoveragePanel from '@/components/TherapyCoveragePanel';
-import TherapistWorkloadPanel from '@/components/TherapistWorkloadPanel';
+import EnhancedTherapistWorkloadPanel from '@/components/EnhancedTherapistWorkloadPanel';
 import WorkloadAlertsPanel from '@/components/WorkloadAlertsPanel';
 import UtilizationReportPanel from '@/components/UtilizationReportPanel';
 
@@ -17,6 +17,15 @@ interface ScheduleSidebarProps {
   onAlertClick: (therapistId: string) => void;
 }
 
+// Mock data for weekly trend - in a real app this would come from historical data
+const generateMockWeeklyTrend = (therapistId: string): number[] => {
+  // Generate 4 weeks of mock data based on therapist ID for consistency
+  const seed = therapistId.length;
+  return Array.from({ length: 4 }, (_, i) => {
+    return Math.round((Math.sin(seed + i) * 10 + 70 + Math.random() * 20));
+  });
+};
+
 const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
   child,
   coverageData,
@@ -27,6 +36,8 @@ const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
   onQuickAction,
   onAlertClick
 }) => {
+  const weeklyTrend = selectedTherapist ? generateMockWeeklyTrend(selectedTherapist.id) : [];
+
   return (
     <div className="lg:col-span-1 space-y-4">
       <TherapyCoveragePanel
@@ -34,10 +45,11 @@ const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
         coverageData={coverageData}
       />
       
-      {hasEditingSession && (
-        <TherapistWorkloadPanel
+      {hasEditingSession && selectedTherapist && (
+        <EnhancedTherapistWorkloadPanel
           therapist={selectedTherapist}
           workloadData={therapistWorkload}
+          weeklyTrend={weeklyTrend}
           onQuickAction={onQuickAction}
         />
       )}

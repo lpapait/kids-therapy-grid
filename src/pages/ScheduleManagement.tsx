@@ -6,13 +6,20 @@ import ScheduleHeader from '@/components/ScheduleManagement/ScheduleHeader';
 import ChildSelector from '@/components/ScheduleManagement/ChildSelector';
 import ScheduleSidebar from '@/components/ScheduleManagement/ScheduleSidebar';
 import ScheduleGrid from '@/components/ScheduleManagement/ScheduleGrid';
+import LazyPanel from '@/components/LazyPanel';
 import { useData } from '@/contexts/DataContext';
 import { Child, Schedule } from '@/types';
 import { useTherapyCoverage } from '@/hooks/useTherapyCoverage';
-import { useTherapistWorkload } from '@/hooks/useTherapistWorkload';
+import { useOptimizedWorkload } from '@/hooks/useOptimizedWorkload';
+import { useDebounce, useDebouncedCallback } from '@/hooks/useDebounce';
+import { useWeekDuplication } from '@/hooks/useWeekDuplication';
+import { useToast } from '@/hooks/use-toast';
 
 const ScheduleManagement = () => {
   const { children, getTherapistById } = useData();
+  const { toast } = useToast();
+  const { duplicateWeek } = useWeekDuplication();
+  
   const [selectedWeek, setSelectedWeek] = useState(new Date());
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [editingSession, setEditingSession] = useState<{
@@ -21,12 +28,16 @@ const ScheduleManagement = () => {
     schedule?: Schedule;
   } | null>(null);
 
-  const therapyCoverage = useTherapyCoverage(selectedChild, selectedWeek);
+  // Debounce the selected week to avoid too many recalculations
+  const debouncedSelectedWeek = useDebounce(selectedWeek, 300);
+  const debouncedSelectedChild = useDebounce(selectedChild, 200);
+
+  const therapyCoverage = useTherapyCoverage(debouncedSelectedChild, debouncedSelectedWeek);
   
   // Get the therapist from the selected session or null
   const selectedTherapistId = editingSession?.schedule?.therapistId || null;
   const selectedTherapist = selectedTherapistId ? getTherapistById(selectedTherapistId) : null;
-  const therapistWorkload = useTherapistWorkload(selectedTherapistId, selectedWeek);
+  const therapistWorkload = useOptimizedWorkload(selectedTherapistId, debouncedSelectedWeek);
 
   const handleScheduleClick = (date: Date, time: string, schedule?: Schedule) => {
     if (!selectedChild) return;
@@ -42,33 +53,63 @@ const ScheduleManagement = () => {
     setEditingSession(null);
   };
 
-  const handleDuplicateWeek = () => {
-    // Implementar duplicação da semana anterior
-    console.log('Duplicar semana anterior');
-  };
+  const handleDuplicateWeek = useDebouncedCallback(async () => {
+    if (!selectedChild) {
+      toast({
+        title: 'Selecione uma criança',
+        description: 'É necessário selecionar uma criança antes de duplicar a semana.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-  const handleQuickAction = (action: string) => {
+    const duplicatedCount = await duplicateWeek(selectedChild, selectedWeek);
+    if (duplicatedCount > 0) {
+      // Force re-render by updating the selected week state
+      setSelectedWeek(new Date(selectedWeek));
+    }
+  }, 500);
+
+  const handleQuickAction = useDebouncedCallback((action: string) => {
+    if (!selectedTherapistId) return;
+
     switch (action) {
       case 'add_session':
-        console.log('Adding new session for therapist:', selectedTherapistId);
+        toast({
+          title: 'Adicionando nova sessão',
+          description: `Preparando nova sessão para ${selectedTherapist?.name}`,
+          variant: 'default'
+        });
         break;
       case 'view_schedule':
-        console.log('Viewing schedule for therapist:', selectedTherapistId);
+        toast({
+          title: 'Visualizando agenda',
+          description: `Abrindo agenda de ${selectedTherapist?.name}`,
+          variant: 'default'
+        });
         break;
       case 'redistribute':
-        console.log('Redistributing sessions for therapist:', selectedTherapistId);
+        toast({
+          title: 'Redistribuindo sessões',
+          description: `Iniciando redistribuição para ${selectedTherapist?.name}`,
+          variant: 'default'
+        });
         break;
       default:
         console.log('Unknown action:', action);
     }
-  };
+  }, 300);
 
-  const handleAlertClick = (therapistId: string) => {
+  const handleAlertClick = useDebouncedCallback((therapistId: string) => {
     const therapist = getTherapistById(therapistId);
     if (therapist) {
-      console.log(`Focusing on therapist: ${therapist.name}`);
+      toast({
+        title: 'Focalizando terapeuta',
+        description: `Visualizando detalhes de ${therapist.name}`,
+        variant: 'default'
+      });
     }
-  };
+  }, 200);
 
   return (
     <div className="space-y-6">
@@ -91,22 +132,26 @@ const ScheduleManagement = () => {
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <ScheduleSidebar
-              child={selectedChild}
-              coverageData={therapyCoverage}
-              selectedTherapist={selectedTherapist}
-              therapistWorkload={therapistWorkload}
-              selectedWeek={selectedWeek}
-              hasEditingSession={!!editingSession?.schedule}
-              onQuickAction={handleQuickAction}
-              onAlertClick={handleAlertClick}
-            />
+            <LazyPanel className="lg:col-span-1">
+              <ScheduleSidebar
+                child={debouncedSelectedChild}
+                coverageData={therapyCoverage}
+                selectedTherapist={selectedTherapist}
+                therapistWorkload={therapistWorkload}
+                selectedWeek={debouncedSelectedWeek}
+                hasEditingSession={!!editingSession?.schedule}
+                onQuickAction={handleQuickAction}
+                onAlertClick={handleAlertClick}
+              />
+            </LazyPanel>
 
-            <ScheduleGrid
-              selectedWeek={selectedWeek}
-              selectedChild={selectedChild}
-              onScheduleClick={handleScheduleClick}
-            />
+            <LazyPanel className="lg:col-span-3">
+              <ScheduleGrid
+                selectedWeek={debouncedSelectedWeek}
+                selectedChild={debouncedSelectedChild}
+                onScheduleClick={handleScheduleClick}
+              />
+            </LazyPanel>
           </div>
         </>
       )}
