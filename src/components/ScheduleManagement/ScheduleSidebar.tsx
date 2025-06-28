@@ -7,7 +7,7 @@ import WorkloadAlertsPanel from '@/components/WorkloadAlertsPanel';
 import UtilizationReportPanel from '@/components/UtilizationReportPanel';
 
 interface ScheduleSidebarProps {
-  child: Child;
+  child: Child | null;
   coverageData: TherapyCoverage[];
   selectedTherapist: Therapist | null;
   therapistWorkload: TherapistWorkload | null;
@@ -20,7 +20,7 @@ interface ScheduleSidebarProps {
 // Mock data for weekly trend - in a real app this would come from historical data
 const generateMockWeeklyTrend = (therapistId: string): number[] => {
   // Generate 4 weeks of mock data based on therapist ID for consistency
-  const seed = therapistId.length;
+  const seed = therapistId?.length || 1;
   return Array.from({ length: 4 }, (_, i) => {
     return Math.round((Math.sin(seed + i) * 10 + 70 + Math.random() * 20));
   });
@@ -36,13 +36,15 @@ const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
   onQuickAction,
   onAlertClick
 }) => {
-  const weeklyTrend = selectedTherapist ? generateMockWeeklyTrend(selectedTherapist.id) : [];
+  // Validação de dados
+  const safeCoverageData = Array.isArray(coverageData) ? coverageData : [];
+  const weeklyTrend = selectedTherapist?.id ? generateMockWeeklyTrend(selectedTherapist.id) : [];
 
   return (
     <div className="lg:col-span-1 space-y-4">
       <TherapyCoveragePanel
         child={child}
-        coverageData={coverageData}
+        coverageData={safeCoverageData}
       />
       
       {hasEditingSession && selectedTherapist && (

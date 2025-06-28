@@ -40,7 +40,14 @@ const ScheduleManagement = () => {
   const therapistWorkload = useOptimizedWorkload(selectedTherapistId, debouncedSelectedWeek);
 
   const handleScheduleClick = (date: Date, time: string, schedule?: Schedule) => {
-    if (!selectedChild) return;
+    if (!selectedChild) {
+      toast({
+        title: 'Selecione uma criança',
+        description: 'É necessário selecionar uma criança antes de agendar uma sessão.',
+        variant: 'destructive'
+      });
+      return;
+    }
     
     setEditingSession({
       date,
@@ -63,50 +70,77 @@ const ScheduleManagement = () => {
       return;
     }
 
-    const duplicatedCount = await duplicateWeek(selectedChild, selectedWeek);
-    if (duplicatedCount > 0) {
-      // Force re-render by updating the selected week state
-      setSelectedWeek(new Date(selectedWeek));
+    try {
+      const duplicatedCount = await duplicateWeek(selectedChild, selectedWeek);
+      if (duplicatedCount && duplicatedCount > 0) {
+        // Force re-render by updating the selected week state
+        setSelectedWeek(new Date(selectedWeek));
+      }
+    } catch (error) {
+      console.error('Erro ao duplicar semana:', error);
+      toast({
+        title: 'Erro ao duplicar semana',
+        description: 'Ocorreu um erro inesperado. Tente novamente.',
+        variant: 'destructive'
+      });
     }
   }, 500);
 
   const handleQuickAction = useDebouncedCallback((action: string) => {
     if (!selectedTherapistId) return;
 
-    switch (action) {
-      case 'add_session':
-        toast({
-          title: 'Adicionando nova sessão',
-          description: `Preparando nova sessão para ${selectedTherapist?.name}`,
-          variant: 'default'
-        });
-        break;
-      case 'view_schedule':
-        toast({
-          title: 'Visualizando agenda',
-          description: `Abrindo agenda de ${selectedTherapist?.name}`,
-          variant: 'default'
-        });
-        break;
-      case 'redistribute':
-        toast({
-          title: 'Redistribuindo sessões',
-          description: `Iniciando redistribuição para ${selectedTherapist?.name}`,
-          variant: 'default'
-        });
-        break;
-      default:
-        console.log('Unknown action:', action);
+    try {
+      switch (action) {
+        case 'add_session':
+          toast({
+            title: 'Adicionando nova sessão',
+            description: `Preparando nova sessão para ${selectedTherapist?.name || 'terapeuta'}`,
+            variant: 'default'
+          });
+          break;
+        case 'view_schedule':
+          toast({
+            title: 'Visualizando agenda',
+            description: `Abrindo agenda de ${selectedTherapist?.name || 'terapeuta'}`,
+            variant: 'default'
+          });
+          break;
+        case 'redistribute':
+          toast({
+            title: 'Redistribuindo sessões',
+            description: `Iniciando redistribuição para ${selectedTherapist?.name || 'terapeuta'}`,
+            variant: 'default'
+          });
+          break;
+        default:
+          console.log('Unknown action:', action);
+      }
+    } catch (error) {
+      console.error('Erro na ação rápida:', error);
+      toast({
+        title: 'Erro na operação',
+        description: 'Não foi possível executar a ação solicitada.',
+        variant: 'destructive'
+      });
     }
   }, 300);
 
   const handleAlertClick = useDebouncedCallback((therapistId: string) => {
-    const therapist = getTherapistById(therapistId);
-    if (therapist) {
+    try {
+      const therapist = getTherapistById(therapistId);
+      if (therapist) {
+        toast({
+          title: 'Focalizando terapeuta',
+          description: `Visualizando detalhes de ${therapist.name}`,
+          variant: 'default'
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao focar no terapeuta:', error);
       toast({
-        title: 'Focalizando terapeuta',
-        description: `Visualizando detalhes de ${therapist.name}`,
-        variant: 'default'
+        title: 'Erro',
+        description: 'Não foi possível visualizar os detalhes do terapeuta.',
+        variant: 'destructive'
       });
     }
   }, 200);

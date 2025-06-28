@@ -13,7 +13,7 @@ import { useTherapistWorkload } from '@/hooks/useTherapistWorkload';
 
 interface WeeklyGridProps {
   selectedWeek: Date;
-  selectedChild?: Child;
+  selectedChild?: Child | null;
   onScheduleClick: (date: Date, time: string, schedule?: Schedule) => void;
   viewMode: 'template' | 'schedule';
 }
@@ -25,17 +25,35 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
   viewMode 
 }) => {
   const { schedules, getTherapistById } = useData();
+  
+  // Validações de segurança
+  if (!selectedWeek) {
+    return (
+      <div className="bg-white rounded-lg border p-6">
+        <div className="text-center text-gray-500">
+          <Calendar className="h-8 w-8 mx-auto mb-2" />
+          <p>Semana não selecionada</p>
+        </div>
+      </div>
+    );
+  }
+
   const weekDays = getWeekDays(selectedWeek);
   const timeSlots = getTimeSlots();
 
   const getScheduleForSlot = (date: Date, time: string) => {
     if (!selectedChild) return null;
     
-    return schedules.find(schedule => 
-      schedule.childId === selectedChild.id &&
-      format(schedule.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
-      schedule.time === time
-    );
+    try {
+      return schedules.find(schedule => 
+        schedule.childId === selectedChild.id &&
+        format(schedule.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
+        schedule.time === time
+      ) || null;
+    } catch (error) {
+      console.error('Erro ao buscar agendamento:', error);
+      return null;
+    }
   };
 
   const getStatusColor = (status: Schedule['status']) => {
@@ -46,6 +64,7 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
         return 'bg-red-100 text-red-800 border-red-200';
       case 'rescheduled':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'scheduled':
       default:
         return 'bg-blue-100 text-blue-800 border-blue-200';
     }
@@ -59,8 +78,23 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
         return '❌';
       case 'rescheduled':
         return '⚠️';
+      case 'scheduled':
       default:
         return '📅';
+    }
+  };
+
+  const getStatusLabel = (status: Schedule['status']) => {
+    switch (status) {
+      case 'completed':
+        return 'Realizado';
+      case 'cancelled':
+        return 'Cancelado';
+      case 'rescheduled':
+        return 'Remarcado';
+      case 'scheduled':
+      default:
+        return 'Agendado';
     }
   };
 
@@ -123,28 +157,28 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
                   {schedule ? (
                     <div className="space-y-2">
                       {/* Workload Alert */}
-                      <WorkloadAlert therapistId={schedule.therapistId} />
+                      {schedule.therapistId && (
+                        <WorkloadAlert therapistId={schedule.therapistId} />
+                      )}
                       
                       <div className="flex items-center justify-between">
                         <Badge variant="secondary" className={`text-xs ${getStatusColor(schedule.status)}`}>
-                          {getStatusIcon(schedule.status)} {schedule.status === 'scheduled' ? 'Agendado' : 
-                           schedule.status === 'completed' ? 'Realizado' :
-                           schedule.status === 'cancelled' ? 'Cancelado' : 'Remarcado'}
+                          {getStatusIcon(schedule.status)} {getStatusLabel(schedule.status)}
                         </Badge>
                       </div>
                       <div className="text-sm space-y-1">
                         <div className="flex items-center text-blue-600 font-medium">
                           <Activity className="h-3 w-3 mr-1" />
-                          {schedule.activity}
+                          {schedule.activity || 'Atividade não definida'}
                         </div>
                         {therapist && (
                           <div className="flex items-center text-gray-600 text-xs">
                             <div 
                               className="w-3 h-3 rounded-full mr-1 border" 
-                              style={{ backgroundColor: therapist.color }}
+                              style={{ backgroundColor: therapist.color || '#gray' }}
                             />
                             <User className="h-3 w-3 mr-1" />
-                            {therapist.name}
+                            {therapist.name || 'Terapeuta não identificado'}
                           </div>
                         )}
                         {schedule.observations && (
@@ -156,7 +190,12 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
                     </div>
                   ) : (
                     <div className="h-full flex items-center justify-center text-gray-400">
-                      <Button variant="ghost" size="sm" className="text-xs">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs"
+                        disabled={!selectedChild}
+                      >
                         + Agendar
                       </Button>
                     </div>
