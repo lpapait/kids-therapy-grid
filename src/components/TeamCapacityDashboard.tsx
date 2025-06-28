@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Users, TrendingUp, AlertTriangle, Eye, Shuffle } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useTherapistAlerts } from '@/hooks/useTherapistAlerts';
@@ -28,23 +28,33 @@ const TeamCapacityDashboard: React.FC<TeamCapacityDashboardProps> = ({
   // Prepare chart data
   const chartData = therapists.map(therapist => {
     const alert = alerts.find(a => a.therapistId === therapist.id);
+    const status = alert?.status || 'ok';
+    let color: string;
+    
+    switch (status) {
+      case 'critical': 
+        color = '#ef4444';
+        break;
+      case 'near_limit': 
+        color = '#f97316';
+        break;
+      case 'approaching_limit': 
+        color = '#eab308';
+        break;
+      default: 
+        color = '#22c55e';
+        break;
+    }
+    
     return {
       name: therapist.name.split(' ')[0], // First name only for chart
       utilization: alert?.percentage || 0,
       hours: alert?.hoursScheduled || 0,
       maxHours: therapist.weeklyWorkloadHours,
-      status: alert?.status || 'ok'
+      status,
+      color
     };
   }).sort((a, b) => b.utilization - a.utilization);
-
-  const getBarColor = (status: string) => {
-    switch (status) {
-      case 'critical': return '#ef4444';
-      case 'near_limit': return '#f97316';
-      case 'approaching_limit': return '#eab308';
-      default: return '#22c55e';
-    }
-  };
 
   const handleRedistribute = () => {
     if (onRedistributeLoad) {
@@ -164,11 +174,11 @@ const TeamCapacityDashboard: React.FC<TeamCapacityDashboardProps> = ({
                     'Utilização'
                   ]}
                 />
-                <Bar 
-                  dataKey="utilization" 
-                  fill={(entry: any) => getBarColor(entry.status)}
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="utilization" radius={[4, 4, 0, 0]}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
