@@ -37,3 +37,6 @@ export const isSameWeek = (date1: Date, date2: Date) => {
   const week2 = getWeekDays(date2);
   return isSameDay(week1[0], week2[0]);
 };
+
+// Export addDays from date-fns for external use
+export { addDays } from 'date-fns';

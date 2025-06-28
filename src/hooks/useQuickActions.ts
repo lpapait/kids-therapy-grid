@@ -119,6 +119,7 @@ export const useQuickActions = () => {
               duration: 60,
               activity: 'Terapia Individual',
               status: 'scheduled',
+              updatedBy: 'system', // Add the missing updatedBy property
               createdAt: new Date(),
               updatedAt: new Date()
             };
