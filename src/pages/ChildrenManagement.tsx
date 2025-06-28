@@ -75,6 +75,37 @@ const ChildrenManagement = () => {
   const onSubmit = (data: ChildFormData) => {
     if (!user) return;
 
+    // Convert form data to proper types
+    const validGuardians: Guardian[] = data.guardians
+      .filter(g => g.name && g.relationship && g.phone)
+      .map(g => ({
+        name: g.name!,
+        relationship: g.relationship!,
+        phone: g.phone!,
+        email: g.email || undefined,
+        cpf: g.cpf || undefined
+      }));
+
+    const validWeeklyTherapies: WeeklyTherapy[] = data.weeklyTherapies
+      .filter(t => t.specialty && t.hoursRequired)
+      .map(t => ({
+        specialty: t.specialty!,
+        hoursRequired: t.hoursRequired!
+      }));
+
+    let validAddress: Address | undefined = undefined;
+    if (data.address && data.address.street && data.address.number && data.address.neighborhood && data.address.city && data.address.state && data.address.cep) {
+      validAddress = {
+        street: data.address.street,
+        number: data.address.number,
+        complement: data.address.complement,
+        neighborhood: data.address.neighborhood,
+        city: data.address.city,
+        state: data.address.state,
+        cep: data.address.cep
+      };
+    }
+
     const newChild: Omit<Child, 'id' | 'createdAt'> = {
       name: data.name,
       birthDate: new Date(data.birthDate),
@@ -83,9 +114,9 @@ const ChildrenManagement = () => {
       susCard: data.susCard,
       medications: data.medications,
       diagnosis: data.diagnosis,
-      address: data.address,
-      guardians: data.guardians.filter(g => g.name && g.relationship && g.phone),
-      weeklyTherapies: data.weeklyTherapies,
+      address: validAddress,
+      guardians: validGuardians,
+      weeklyTherapies: validWeeklyTherapies,
       createdBy: user.id
     };
 
@@ -555,7 +586,7 @@ const ChildrenManagement = () => {
             <Separator />
 
             <WeeklyTherapiesManager
-              weeklyTherapies={form.watch('weeklyTherapies')}
+              weeklyTherapies={form.watch('weeklyTherapies').filter(t => t.specialty && t.hoursRequired) as WeeklyTherapy[]}
               onChange={(therapies) => form.setValue('weeklyTherapies', therapies)}
             />
           </div>

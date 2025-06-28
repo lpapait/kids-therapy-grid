@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,7 +36,7 @@ import { useCEPLookup } from '@/hooks/useCEPLookup';
 import { therapistFormSchema, type TherapistFormData } from '@/lib/validationSchemas';
 
 import { useData } from '@/contexts/DataContext';
-import { Therapist, PROFESSIONAL_TYPES, SPECIALTIES } from '@/types';
+import { Therapist, PROFESSIONAL_TYPES, SPECIALTIES, Address } from '@/types';
 
 const TherapistManagement = () => {
   const { therapists, addTherapist, updateTherapist, deleteTherapist } = useData();
@@ -84,9 +83,26 @@ const TherapistManagement = () => {
   };
 
   const onSubmit = (data: TherapistFormData) => {
+    // Convert form data to proper types
+    let validAddress: Address | undefined = undefined;
+    if (data.address && data.address.street && data.address.number && data.address.neighborhood && data.address.city && data.address.state && data.address.cep) {
+      validAddress = {
+        street: data.address.street,
+        number: data.address.number,
+        complement: data.address.complement,
+        neighborhood: data.address.neighborhood,
+        city: data.address.city,
+        state: data.address.state,
+        cep: data.address.cep
+      };
+    }
+
     if (editingTherapist) {
       // Update existing therapist
-      updateTherapist(editingTherapist.id, data);
+      updateTherapist(editingTherapist.id, {
+        ...data,
+        address: validAddress
+      });
       toast({
         title: "Terapeuta atualizado com sucesso!",
       })
@@ -101,7 +117,7 @@ const TherapistManagement = () => {
         specialties: data.specialties,
         phone: data.phone,
         email: data.email,
-        address: data.address,
+        address: validAddress,
       };
       addTherapist(therapistData);
       toast({
@@ -124,9 +140,16 @@ const TherapistManagement = () => {
     form.setValue("specialties", therapist.specialties);
     form.setValue("phone", therapist.phone || "");
     form.setValue("email", therapist.email || "");
-    form.setValue("address", therapist.address || {
-      street: '', number: '', complement: '', neighborhood: '', city: '', state: '', cep: ''
-    });
+    
+    // Handle address properly
+    if (therapist.address) {
+      form.setValue("address", therapist.address);
+    } else {
+      form.setValue("address", {
+        street: '', number: '', complement: '', neighborhood: '', city: '', state: '', cep: ''
+      });
+    }
+    
     form.setValue("weeklyWorkloadHours", therapist.weeklyWorkloadHours || 40);
     setShowForm(true);
   };
