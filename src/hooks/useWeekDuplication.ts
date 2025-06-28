@@ -63,12 +63,11 @@ export const useWeekDuplication = () => {
           childId: schedule.childId,
           therapistId: schedule.therapistId,
           date: newDate,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
+          time: schedule.time,
+          activity: schedule.activity,
           duration: schedule.duration,
-          specialty: schedule.specialty,
           status: 'scheduled',
-          notes: schedule.notes ? `${schedule.notes} (Duplicado da semana anterior)` : 'Duplicado da semana anterior',
+          observations: schedule.observations ? `${schedule.observations} (Duplicado da semana anterior)` : 'Duplicado da semana anterior',
           updatedBy: 'system'
         });
       });
