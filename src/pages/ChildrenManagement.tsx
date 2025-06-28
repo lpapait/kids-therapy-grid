@@ -2,47 +2,90 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { MaskedInput } from '@/components/ui/masked-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Child, Guardian, WeeklyTherapy } from '@/types';
-import { Users, Plus, Calendar, Phone, Mail, Clock } from 'lucide-react';
+import { Child, Guardian, WeeklyTherapy, Address, RELATIONSHIP_TYPES } from '@/types';
+import { Users, Plus, Calendar, Phone, Mail, Clock, MapPin, FileText, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import WeeklyTherapiesManager from '@/components/WeeklyTherapiesManager';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { childFormSchema, type ChildFormData } from '@/lib/validationSchemas';
+import { useCEPLookup } from '@/hooks/useCEPLookup';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 const ChildrenManagement = () => {
   const { children, addChild } = useData();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { lookupCEP, loading: cepLoading } = useCEPLookup();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    birthDate: '',
-    gender: '' as 'male' | 'female' | '',
-    medications: '',
-    diagnosis: '',
-    guardians: [{ name: '', relationship: '', phone: '', email: '' }] as Guardian[],
-    weeklyTherapies: [] as WeeklyTherapy[]
+  const form = useForm<ChildFormData>({
+    resolver: zodResolver(childFormSchema),
+    defaultValues: {
+      name: '',
+      birthDate: '',
+      gender: undefined,
+      cpf: '',
+      susCard: '',
+      medications: '',
+      diagnosis: '',
+      address: {
+        street: '',
+        number: '',
+        complement: '',
+        neighborhood: '',
+        city: '',
+        state: '',
+        cep: ''
+      },
+      guardians: [{ name: '', relationship: RELATIONSHIP_TYPES[0], phone: '', email: '', cpf: '' }],
+      weeklyTherapies: []
+    }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleCEP = async (cep: string, index?: number) => {
+    if (cep.replace(/\D/g, '').length === 8) {
+      const address = await lookupCEP(cep);
+      if (address) {
+        form.setValue('address.street', address.street);
+        form.setValue('address.neighborhood', address.neighborhood);
+        form.setValue('address.city', address.city);
+        form.setValue('address.state', address.state);
+      }
+    }
+  };
+
+  const onSubmit = (data: ChildFormData) => {
     if (!user) return;
 
     const newChild: Omit<Child, 'id' | 'createdAt'> = {
-      name: formData.name,
-      birthDate: new Date(formData.birthDate),
-      gender: formData.gender as 'male' | 'female',
-      medications: formData.medications,
-      diagnosis: formData.diagnosis,
-      guardians: formData.guardians.filter(g => g.name && g.relationship && g.phone),
-      weeklyTherapies: formData.weeklyTherapies,
+      name: data.name,
+      birthDate: new Date(data.birthDate),
+      gender: data.gender,
+      cpf: data.cpf,
+      susCard: data.susCard,
+      medications: data.medications,
+      diagnosis: data.diagnosis,
+      address: data.address,
+      guardians: data.guardians.filter(g => g.name && g.relationship && g.phone),
+      weeklyTherapies: data.weeklyTherapies,
       createdBy: user.id
     };
 
@@ -50,37 +93,27 @@ const ChildrenManagement = () => {
     
     toast({
       title: "Criança cadastrada com sucesso!",
-      description: `${formData.name} foi adicionada ao sistema.`,
+      description: `${data.name} foi adicionada ao sistema.`,
     });
 
-    // Reset form
-    setFormData({
-      name: '',
-      birthDate: '',
-      gender: '',
-      medications: '',
-      diagnosis: '',
-      guardians: [{ name: '', relationship: '', phone: '', email: '' }],
-      weeklyTherapies: []
-    });
-    
+    form.reset();
     setIsDialogOpen(false);
+    setCurrentStep(1);
   };
 
   const addGuardian = () => {
-    setFormData(prev => ({
-      ...prev,
-      guardians: [...prev.guardians, { name: '', relationship: '', phone: '', email: '' }]
-    }));
+    const currentGuardians = form.getValues('guardians');
+    form.setValue('guardians', [
+      ...currentGuardians,
+      { name: '', relationship: RELATIONSHIP_TYPES[0], phone: '', email: '', cpf: '' }
+    ]);
   };
 
-  const updateGuardian = (index: number, field: keyof Guardian, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      guardians: prev.guardians.map((guardian, i) => 
-        i === index ? { ...guardian, [field]: value } : guardian
-      )
-    }));
+  const removeGuardian = (index: number) => {
+    const currentGuardians = form.getValues('guardians');
+    if (currentGuardians.length > 1) {
+      form.setValue('guardians', currentGuardians.filter((_, i) => i !== index));
+    }
   };
 
   const calculateAge = (birthDate: Date) => {
@@ -92,6 +125,445 @@ const ChildrenManagement = () => {
       return age - 1;
     }
     return age;
+  };
+
+  const nextStep = async () => {
+    const isValid = await form.trigger(
+      currentStep === 1 ? ['name', 'birthDate', 'gender', 'cpf'] :
+      currentStep === 2 ? ['diagnosis', 'medications'] :
+      currentStep === 3 ? ['guardians'] : []
+    );
+    
+    if (isValid) {
+      setCurrentStep(prev => Math.min(prev + 1, 4));
+    }
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
+                <User className="h-5 w-5" />
+                Informações Pessoais
+              </h3>
+              <p className="text-sm text-gray-600">Dados básicos da criança</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome Completo *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome completo da criança" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="birthDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de Nascimento *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sexo *</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o sexo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="male">Masculino</SelectItem>
+                        <SelectItem value="female">Feminino</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="cpf"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CPF</FormLabel>
+                    <FormControl>
+                      <MaskedInput
+                        mask="cpf"
+                        placeholder="000.000.000-00"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="susCard"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cartão SUS</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Número do cartão SUS" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
+                <FileText className="h-5 w-5" />
+                Informações Médicas
+              </h3>
+              <p className="text-sm text-gray-600">Diagnóstico e medicações</p>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="diagnosis"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Diagnóstico/Laudo *</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Descreva o diagnóstico médico e laudos relevantes..."
+                      rows={4}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="medications"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Medicações</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Liste as medicações em uso, dosagens e horários..."
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
+                <Users className="h-5 w-5" />
+                Responsáveis
+              </h3>
+              <p className="text-sm text-gray-600">Informações dos responsáveis</p>
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <Label>Responsáveis *</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addGuardian}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Responsável
+              </Button>
+            </div>
+            
+            {form.watch('guardians').map((guardian, index) => (
+              <Card key={index} className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium">Responsável {index + 1}</h4>
+                  {form.watch('guardians').length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeGuardian(index)}
+                    >
+                      Remover
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`guardians.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nome completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name={`guardians.${index}.relationship`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Parentesco *</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {RELATIONSHIP_TYPES.map((type) => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name={`guardians.${index}.phone`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone *</FormLabel>
+                        <FormControl>
+                          <MaskedInput
+                            mask="phone"
+                            placeholder="(11) 99999-9999"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name={`guardians.${index}.email`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="email@exemplo.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name={`guardians.${index}.cpf`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CPF</FormLabel>
+                        <FormControl>
+                          <MaskedInput
+                            mask="cpf"
+                            placeholder="000.000.000-00"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </Card>
+            ))}
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Endereço e Terapias
+              </h3>
+              <p className="text-sm text-gray-600">Informações complementares</p>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-medium">Endereço (Opcional)</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="address.cep"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CEP</FormLabel>
+                      <FormControl>
+                        <MaskedInput
+                          mask="cep"
+                          placeholder="00000-000"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            handleCEP(e.target.value);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="address.street"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Logradouro</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Rua, Avenida, etc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="address.number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número</FormLabel>
+                      <FormControl>
+                        <Input placeholder="123" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="address.complement"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Complemento</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Apto, Bloco, etc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="address.neighborhood"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bairro</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do bairro" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="address.city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cidade</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome da cidade" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="address.state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estado</FormLabel>
+                      <FormControl>
+                        <Input placeholder="SP" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            <WeeklyTherapiesManager
+              weeklyTherapies={form.watch('weeklyTherapies')}
+              onChange={(therapies) => form.setValue('weeklyTherapies', therapies)}
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
@@ -113,137 +585,50 @@ const ChildrenManagement = () => {
             <DialogHeader>
               <DialogTitle>Cadastrar Nova Criança</DialogTitle>
               <DialogDescription>
-                Preencha as informações da criança, responsáveis e terapias semanais
+                Preencha as informações da criança seguindo as etapas
               </DialogDescription>
             </DialogHeader>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                  />
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-500">Etapa {currentStep} de 4</span>
+                <div className="text-sm text-gray-500">
+                  {Math.round((currentStep / 4) * 100)}% completo
                 </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(currentStep / 4) * 100}%` }}
+                />
+              </div>
+            </div>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {renderStep()}
                 
-                <div className="space-y-2">
-                  <Label htmlFor="birthDate">Data de Nascimento *</Label>
-                  <Input
-                    id="birthDate"
-                    type="date"
-                    value={formData.birthDate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Sexo *</Label>
-                <Select value={formData.gender} onValueChange={(value: 'male' | 'female') => 
-                  setFormData(prev => ({ ...prev, gender: value }))
-                }>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o sexo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Masculino</SelectItem>
-                    <SelectItem value="female">Feminino</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="diagnosis">Diagnóstico/Laudo *</Label>
-                <Textarea
-                  id="diagnosis"
-                  value={formData.diagnosis}
-                  onChange={(e) => setFormData(prev => ({ ...prev, diagnosis: e.target.value }))}
-                  placeholder="Descreva o diagnóstico médico..."
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="medications">Medicações</Label>
-                <Textarea
-                  id="medications"
-                  value={formData.medications}
-                  onChange={(e) => setFormData(prev => ({ ...prev, medications: e.target.value }))}
-                  placeholder="Liste as medicações em uso..."
-                />
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Responsáveis *</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addGuardian}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Responsável
+                <div className="flex justify-between pt-6 border-t">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={currentStep === 1 ? () => setIsDialogOpen(false) : prevStep}
+                  >
+                    {currentStep === 1 ? 'Cancelar' : 'Anterior'}
                   </Button>
+                  
+                  {currentStep < 4 ? (
+                    <Button type="button" onClick={nextStep}>
+                      Próximo
+                    </Button>
+                  ) : (
+                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                      Cadastrar Criança
+                    </Button>
+                  )}
                 </div>
-                
-                {formData.guardians.map((guardian, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Nome *</Label>
-                        <Input
-                          value={guardian.name}
-                          onChange={(e) => updateGuardian(index, 'name', e.target.value)}
-                          placeholder="Nome completo"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Parentesco *</Label>
-                        <Input
-                          value={guardian.relationship}
-                          onChange={(e) => updateGuardian(index, 'relationship', e.target.value)}
-                          placeholder="Ex: Mãe, Pai, Avó..."
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Telefone *</Label>
-                        <Input
-                          value={guardian.phone}
-                          onChange={(e) => updateGuardian(index, 'phone', e.target.value)}
-                          placeholder="(11) 99999-9999"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input
-                          type="email"
-                          value={guardian.email}
-                          onChange={(e) => updateGuardian(index, 'email', e.target.value)}
-                          placeholder="email@exemplo.com"
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-
-              <WeeklyTherapiesManager
-                weeklyTherapies={formData.weeklyTherapies}
-                onChange={(therapies) => setFormData(prev => ({ ...prev, weeklyTherapies: therapies }))}
-              />
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                  Cadastrar Criança
-                </Button>
-              </div>
-            </form>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -327,6 +712,21 @@ const ChildrenManagement = () => {
                   ))}
                 </div>
               </div>
+
+              {child.address && (
+                <div>
+                  <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    Endereço
+                  </h4>
+                  <div className="text-sm text-gray-600 bg-green-50 p-2 rounded">
+                    <div>{child.address.street}, {child.address.number}</div>
+                    {child.address.complement && <div>{child.address.complement}</div>}
+                    <div>{child.address.neighborhood} - {child.address.city}/{child.address.state}</div>
+                    <div>CEP: {child.address.cep}</div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

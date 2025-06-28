@@ -14,12 +14,25 @@ export interface Child {
   name: string;
   birthDate: Date;
   gender: 'male' | 'female';
+  cpf?: string;
+  susCard?: string;
   medications?: string;
   diagnosis: string;
+  address?: Address;
   guardians: Guardian[];
   weeklyTherapies: WeeklyTherapy[];
   createdAt: Date;
   createdBy: string;
+}
+
+export interface Address {
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  cep: string;
 }
 
 export interface WeeklyTherapy {
@@ -32,18 +45,39 @@ export interface Guardian {
   relationship: string;
   phone: string;
   email?: string;
+  cpf?: string;
 }
 
 export interface Therapist {
   id: string;
   name: string;
+  cpf?: string;
   licenseNumber: string;
   education: string;
   professionalType: string;
   specialties: string[];
+  phone?: string;
+  email?: string;
+  address?: Address;
+  workSchedule?: WorkSchedule;
   color: string;
   weeklyWorkloadHours: number;
   createdAt: Date;
+}
+
+export interface WorkSchedule {
+  monday: TimeSlot[];
+  tuesday: TimeSlot[];
+  wednesday: TimeSlot[];
+  thursday: TimeSlot[];
+  friday: TimeSlot[];
+  saturday: TimeSlot[];
+  sunday: TimeSlot[];
+}
+
+export interface TimeSlot {
+  start: string;
+  end: string;
 }
 
 export interface ScheduleTemplate {
@@ -138,3 +172,20 @@ export const DURATION_LABELS: Record<number, string> = {
   90: '1h 30min',
   120: '2 horas'
 };
+
+export const RELATIONSHIP_TYPES = [
+  'Mãe',
+  'Pai',
+  'Avó',
+  'Avô',
+  'Tia',
+  'Tio',
+  'Responsável Legal',
+  'Outro'
+];
+
+export const BRAZILIAN_STATES = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO',
+  'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI',
+  'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
