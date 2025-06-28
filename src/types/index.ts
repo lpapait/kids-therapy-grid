@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -54,6 +53,7 @@ export interface ScheduleTemplate {
   time: string; // HH:mm format
   activity: string;
   therapistId: string;
+  duration: number; // Duration in minutes
 }
 
 export interface Schedule {
@@ -63,6 +63,7 @@ export interface Schedule {
   date: Date;
   time: string;
   activity: string;
+  duration: number; // Duration in minutes
   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
   observations?: string;
   createdAt: Date;
@@ -103,6 +104,7 @@ export interface TherapistWorkload {
   percentage: number;
   status: 'available' | 'near_limit' | 'overloaded';
   remainingHours: number;
+  suggestedActions?: string[];
 }
 
 export const SPECIALTIES = [
@@ -126,3 +128,13 @@ export const PROFESSIONAL_TYPES = [
   'Educador Físico',
   'Enfermeiro'
 ];
+
+export const SESSION_DURATIONS = [30, 45, 60, 90, 120]; // in minutes
+
+export const DURATION_LABELS: Record<number, string> = {
+  30: '30 min',
+  45: '45 min',
+  60: '1 hora',
+  90: '1h 30min',
+  120: '2 horas'
+};

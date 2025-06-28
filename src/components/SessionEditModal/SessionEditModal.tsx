@@ -33,7 +33,8 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
     therapistId: schedule?.therapistId || '',
     status: schedule?.status || 'scheduled' as Schedule['status'],
     observations: schedule?.observations || '',
-    reason: ''
+    reason: '',
+    duration: schedule?.duration || 60
   });
 
   const [showHistory, setShowHistory] = useState(false);
@@ -45,7 +46,8 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
         therapistId: schedule.therapistId,
         status: schedule.status,
         observations: schedule.observations || '',
-        reason: ''
+        reason: '',
+        duration: schedule.duration || 60
       });
     } else {
       setFormData({
@@ -53,7 +55,8 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
         therapistId: '',
         status: 'scheduled',
         observations: '',
-        reason: ''
+        reason: '',
+        duration: 60
       });
     }
   }, [schedule]);
@@ -65,6 +68,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
         therapistId: data.therapistId,
         status: data.status,
         observations: data.observations,
+        duration: data.duration,
         updatedBy: user?.id || ''
       }, data.reason || undefined);
     } else {
@@ -76,6 +80,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
         activity: data.activity,
         status: data.status,
         observations: data.observations,
+        duration: data.duration,
         updatedBy: user?.id || ''
       });
     }

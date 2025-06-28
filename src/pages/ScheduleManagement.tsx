@@ -52,6 +52,25 @@ const ScheduleManagement = () => {
     console.log('Duplicar semana anterior');
   };
 
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'add_session':
+        // Logic to add a new session for the therapist
+        console.log('Adding new session for therapist:', selectedTherapistId);
+        break;
+      case 'view_schedule':
+        // Logic to navigate to therapist's schedule
+        console.log('Viewing schedule for therapist:', selectedTherapistId);
+        break;
+      case 'redistribute':
+        // Logic to help redistribute sessions
+        console.log('Redistributing sessions for therapist:', selectedTherapistId);
+        break;
+      default:
+        console.log('Unknown action:', action);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -143,6 +162,7 @@ const ScheduleManagement = () => {
                 <TherapistWorkloadPanel
                   therapist={selectedTherapist}
                   workloadData={therapistWorkload}
+                  onQuickAction={handleQuickAction}
                 />
               )}
             </div>

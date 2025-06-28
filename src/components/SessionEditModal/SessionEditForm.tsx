@@ -2,7 +2,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
-import { Schedule } from '@/types';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Schedule, SESSION_DURATIONS, DURATION_LABELS } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import SessionBasicFields from './SessionBasicFields';
 import SessionStatusField from './SessionStatusField';
@@ -17,6 +19,7 @@ interface SessionEditFormProps {
     status: Schedule['status'];
     observations: string;
     reason: string;
+    duration: number;
   };
   setFormData: React.Dispatch<React.SetStateAction<{
     activity: string;
@@ -24,6 +27,7 @@ interface SessionEditFormProps {
     status: Schedule['status'];
     observations: string;
     reason: string;
+    duration: number;
   }>>;
   schedule?: Schedule;
   date: Date;
@@ -48,7 +52,7 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.activity || !formData.therapistId) {
+    if (!formData.activity || !formData.therapistId || !formData.duration) {
       return;
     }
 
@@ -69,7 +73,8 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
   const hasSignificantChanges = schedule && (
     formData.status !== schedule.status ||
     formData.therapistId !== schedule.therapistId ||
-    formData.activity !== schedule.activity
+    formData.activity !== schedule.activity ||
+    formData.duration !== (schedule.duration || 60)
   );
 
   return (
@@ -80,6 +85,26 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
         date={date}
         time={time}
       />
+
+      {/* Duration Field */}
+      <div className="space-y-2">
+        <Label htmlFor="duration">Duração da Sessão</Label>
+        <Select
+          value={formData.duration.toString()}
+          onValueChange={(value) => setFormData(prev => ({ ...prev, duration: parseInt(value) }))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione a duração" />
+          </SelectTrigger>
+          <SelectContent>
+            {SESSION_DURATIONS.map((duration) => (
+              <SelectItem key={duration} value={duration.toString()}>
+                {DURATION_LABELS[duration]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {schedule && (
         <SessionStatusField
