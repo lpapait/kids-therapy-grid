@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,10 +9,12 @@ import { History, Search, Calendar, User, Activity, FileText, Download } from 'l
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useData } from '@/contexts/DataContext';
+import { useReportExport } from '@/hooks/useReportExport';
 import { ScheduleHistory } from '@/types';
 
 const AuditPage = () => {
   const { getAllHistory, getChildById, getTherapistById, schedules } = useData();
+  const { exportAuditToPDF } = useReportExport();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterPeriod, setFilterPeriod] = useState<string>('all');
@@ -89,10 +90,8 @@ const AuditPage = () => {
     }
   };
 
-  const exportAudit = () => {
-    // Preparar dados para futura exportação em PDF
-    console.log('Preparando dados para exportação:', filteredHistory);
-    // TODO: Implementar exportação em PDF
+  const handleExportAudit = async () => {
+    await exportAuditToPDF(filteredHistory);
   };
 
   // Estatísticas
@@ -114,7 +113,7 @@ const AuditPage = () => {
           </p>
         </div>
         
-        <Button onClick={exportAudit} disabled={filteredHistory.length === 0}>
+        <Button onClick={handleExportAudit} disabled={filteredHistory.length === 0}>
           <Download className="h-4 w-4 mr-2" />
           Exportar Relatório
         </Button>

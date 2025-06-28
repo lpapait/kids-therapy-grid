@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Bell, Users, TrendingUp } from 'lucide-react';
 import { useWorkloadAlerts } from '@/hooks/useWorkloadAlerts';
+import { useQuickActions } from '@/hooks/useQuickActions';
 
 interface WorkloadAlertsPanelProps {
   selectedWeek: Date;
@@ -16,6 +16,17 @@ const WorkloadAlertsPanel: React.FC<WorkloadAlertsPanelProps> = ({
   onAlertClick 
 }) => {
   const { alerts, criticalAlerts, warningAlerts, hasAlerts } = useWorkloadAlerts(selectedWeek);
+  const { openTherapistSchedule } = useQuickActions();
+
+  const handleAlertClick = (therapistId: string) => {
+    // Call parent callback if provided
+    if (onAlertClick) {
+      onAlertClick(therapistId);
+    }
+    
+    // Open therapist schedule in new tab
+    openTherapistSchedule(therapistId);
+  };
 
   if (!hasAlerts) {
     return (
@@ -81,16 +92,14 @@ const WorkloadAlertsPanel: React.FC<WorkloadAlertsPanelProps> = ({
                       ({alert.workloadData.percentage}%)
                     </p>
                   </div>
-                  {onAlertClick && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-6 ml-2 border-red-300 text-red-700"
-                      onClick={() => onAlertClick(alert.therapistId)}
-                    >
-                      Ver Detalhes
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-6 ml-2 border-red-300 text-red-700 hover:bg-red-50"
+                    onClick={() => handleAlertClick(alert.therapistId)}
+                  >
+                    Ver Agenda
+                  </Button>
                 </div>
               </div>
             ))}
@@ -121,16 +130,14 @@ const WorkloadAlertsPanel: React.FC<WorkloadAlertsPanelProps> = ({
                       ({alert.workloadData.percentage}%)
                     </p>
                   </div>
-                  {onAlertClick && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-6 ml-2 border-yellow-300 text-yellow-700"
-                      onClick={() => onAlertClick(alert.therapistId)}
-                    >
-                      Ver Detalhes
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-6 ml-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    onClick={() => handleAlertClick(alert.therapistId)}
+                  >
+                    Ver Agenda
+                  </Button>
                 </div>
               </div>
             ))}

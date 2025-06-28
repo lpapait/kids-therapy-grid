@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -6,12 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, AlertTriangle, CheckCircle, User, Plus, Calendar, RotateCcw, TrendingUp, TrendingDown } from 'lucide-react';
 import { TherapistWorkload, Therapist } from '@/types';
+import { useQuickActions } from '@/hooks/useQuickActions';
 import SparklineChart from './SparklineChart';
 
 interface EnhancedTherapistWorkloadPanelProps {
   therapist: Therapist | null;
   workloadData: TherapistWorkload | null;
   weeklyTrend?: number[];
+  selectedWeek: Date;
   onQuickAction?: (action: string) => void;
 }
 
@@ -19,8 +20,36 @@ const EnhancedTherapistWorkloadPanel: React.FC<EnhancedTherapistWorkloadPanelPro
   therapist, 
   workloadData,
   weeklyTrend = [],
+  selectedWeek,
   onQuickAction = () => {}
 }) => {
+  const { redistributeTherapistSessions, createNewSession, openTherapistSchedule } = useQuickActions();
+
+  const handleQuickAction = async (action: string) => {
+    if (!therapist) return;
+
+    try {
+      switch (action) {
+        case 'add_session':
+          await createNewSession(therapist.id, selectedWeek);
+          onQuickAction('session_added');
+          break;
+        case 'view_schedule':
+          openTherapistSchedule(therapist.id);
+          onQuickAction('schedule_opened');
+          break;
+        case 'redistribute':
+          await redistributeTherapistSessions(therapist.id, selectedWeek);
+          onQuickAction('sessions_redistributed');
+          break;
+        default:
+          console.log('Unknown action:', action);
+      }
+    } catch (error) {
+      console.error('Erro na ação rápida:', error);
+    }
+  };
+
   if (!therapist || !workloadData) {
     return (
       <Card>
@@ -171,7 +200,7 @@ const EnhancedTherapistWorkloadPanel: React.FC<EnhancedTherapistWorkloadPanelPro
           </div>
         )}
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Updated with real functionality */}
         <div className="space-y-2 pt-2 border-t border-gray-100">
           <h4 className="text-xs font-medium text-gray-700 uppercase tracking-wide">Ações Rápidas</h4>
           <div className="grid grid-cols-2 gap-2">
@@ -180,7 +209,7 @@ const EnhancedTherapistWorkloadPanel: React.FC<EnhancedTherapistWorkloadPanelPro
                 size="sm" 
                 variant="outline" 
                 className="text-xs h-8"
-                onClick={() => onQuickAction('add_session')}
+                onClick={() => handleQuickAction('add_session')}
               >
                 <Plus className="h-3 w-3 mr-1" />
                 Nova Sessão
@@ -192,7 +221,7 @@ const EnhancedTherapistWorkloadPanel: React.FC<EnhancedTherapistWorkloadPanelPro
                 size="sm" 
                 variant="outline" 
                 className="text-xs h-8 text-orange-600 border-orange-300"
-                onClick={() => onQuickAction('redistribute')}
+                onClick={() => handleQuickAction('redistribute')}
               >
                 <RotateCcw className="h-3 w-3 mr-1" />
                 Redistribuir
@@ -203,7 +232,7 @@ const EnhancedTherapistWorkloadPanel: React.FC<EnhancedTherapistWorkloadPanelPro
               size="sm" 
               variant="outline" 
               className="text-xs h-8"
-              onClick={() => onQuickAction('view_schedule')}
+              onClick={() => handleQuickAction('view_schedule')}
             >
               <Calendar className="h-3 w-3 mr-1" />
               Ver Agenda

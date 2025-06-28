@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Child, Therapist, TherapistWorkload, TherapyCoverage } from '@/types';
 import TherapyCoveragePanel from '@/components/TherapyCoveragePanel';
@@ -52,6 +51,7 @@ const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
           therapist={selectedTherapist}
           workloadData={therapistWorkload}
           weeklyTrend={weeklyTrend}
+          selectedWeek={selectedWeek}
           onQuickAction={onQuickAction}
         />
       )}
