@@ -44,6 +44,14 @@ const CapacityMonitorWidget: React.FC<CapacityMonitorWidgetProps> = ({
     }
   };
 
+  const getProgressBarClass = () => {
+    switch (metrics.status) {
+      case 'critical': return '[&>div]:bg-red-500';
+      case 'warning': return '[&>div]:bg-yellow-500';
+      default: return '[&>div]:bg-green-500';
+    }
+  };
+
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'redistribute':
@@ -95,11 +103,7 @@ const CapacityMonitorWidget: React.FC<CapacityMonitorWidgetProps> = ({
           </div>
           <Progress 
             value={metrics.overallUtilization} 
-            className="h-3"
-            indicator={
-              metrics.status === 'critical' ? 'bg-red-500' :
-              metrics.status === 'warning' ? 'bg-yellow-500' : 'bg-green-500'
-            }
+            className={`h-3 ${getProgressBarClass()}`}
           />
           <div className="flex justify-between text-xs text-gray-600">
             <span>{metrics.totalScheduled}h agendadas</span>
