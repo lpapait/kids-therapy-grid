@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import WeekSelector from '@/components/WeekSelector';
 import SessionEditModal from '@/components/SessionEditModal';
@@ -6,6 +5,7 @@ import ScheduleHeader from '@/components/ScheduleManagement/ScheduleHeader';
 import ChildSelector from '@/components/ScheduleManagement/ChildSelector';
 import ScheduleSidebar from '@/components/ScheduleManagement/ScheduleSidebar';
 import ScheduleGrid from '@/components/ScheduleManagement/ScheduleGrid';
+import QuickScheduler from '@/components/ScheduleManagement/QuickScheduler';
 import LazyPanel from '@/components/LazyPanel';
 import { useData } from '@/contexts/DataContext';
 import { Child, Schedule } from '@/types';
@@ -163,6 +163,15 @@ const ScheduleManagement = () => {
           <WeekSelector
             selectedWeek={selectedWeek}
             onWeekChange={setSelectedWeek}
+          />
+
+          <QuickScheduler
+            selectedChild={debouncedSelectedChild}
+            selectedWeek={debouncedSelectedWeek}
+            onScheduleCreated={() => {
+              // Force re-render to show new schedule
+              setSelectedWeek(new Date(selectedWeek.getTime()));
+            }}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

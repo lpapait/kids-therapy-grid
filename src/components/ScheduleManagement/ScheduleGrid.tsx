@@ -2,8 +2,15 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
-import WeeklyGrid from '@/components/WeeklyGrid';
 import { Child } from '@/types';
+import { useScheduleGrid } from '@/hooks/useScheduleGrid';
+import { useData } from '@/contexts/DataContext';
+import { getWeekDays, getDayName } from '@/lib/dateUtils';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import EnhancedGridCell from './EnhancedGridCell';
+import GridConfigPanel from './GridConfigPanel';
+import BulkOperationsPanel from './BulkOperationsPanel';
 
 interface ScheduleGridProps {
   selectedWeek: Date;
@@ -16,6 +23,22 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   selectedChild,
   onScheduleClick
 }) => {
+  const { getTherapistById } = useData();
+  
+  const {
+    gridConfig,
+    setGridConfig,
+    timeSlots,
+    weekSchedules,
+    draggedSession,
+    selectedSessions,
+    handleDragStart,
+    handleDrop,
+    toggleSessionSelection,
+    bulkCancel,
+    bulkReschedule
+  } = useScheduleGrid(selectedWeek, selectedChild);
+
   // Validação de segurança
   if (!selectedChild) {
     return (
@@ -42,8 +65,50 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     );
   }
 
+  const weekDays = getWeekDays(selectedWeek).filter(day => {
+    if (gridConfig.showWeekends) return true;
+    const dayOfWeek = day.getDay();
+    return dayOfWeek !== 0 && dayOfWeek !== 6; // Exclude Saturday and Sunday
+  });
+
+  const getScheduleForSlot = (date: Date, time: string) => {
+    return weekSchedules.find(schedule => 
+      format(schedule.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
+      schedule.time === time
+    ) || null;
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleCellDrop = (date: Date, time: string) => (e: React.DragEvent) => {
+    e.preventDefault();
+    handleDrop(date, time);
+  };
+
+  const clearSelection = () => {
+    weekSchedules.forEach(schedule => {
+      if (selectedSessions.includes(schedule.id)) {
+        toggleSessionSelection(schedule.id);
+      }
+    });
+  };
+
   return (
-    <div className="lg:col-span-3">
+    <div className="lg:col-span-3 space-y-4">
+      <GridConfigPanel
+        config={gridConfig}
+        onConfigChange={setGridConfig}
+      />
+
+      <BulkOperationsPanel
+        selectedCount={selectedSessions.length}
+        onBulkCancel={bulkCancel}
+        onBulkReschedule={bulkReschedule}
+        onClearSelection={clearSelection}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -51,16 +116,60 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
             <span>Grade de Agendamentos - {selectedChild.name}</span>
           </CardTitle>
           <CardDescription>
-            Clique em qualquer horário para agendar uma nova sessão ou editar uma existente
+            Arraste sessões para movê-las. Use Ctrl+Click para seleção múltipla.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <WeeklyGrid
-            selectedWeek={selectedWeek}
-            selectedChild={selectedChild}
-            onScheduleClick={onScheduleClick}
-            viewMode="schedule"
-          />
+          <div className="bg-white rounded-lg border overflow-hidden overflow-x-auto">
+            <div className="grid gap-0" style={{ gridTemplateColumns: `120px repeat(${weekDays.length}, 1fr)` }}>
+              {/* Header */}
+              <div className="bg-gray-50 border-b border-r p-3 font-medium text-gray-900 sticky left-0 z-10">
+                Horário
+              </div>
+              {weekDays.map((day) => (
+                <div key={day.toISOString()} className="bg-gray-50 border-b border-r p-3 text-center min-w-[160px]">
+                  <div className="font-medium text-gray-900">
+                    {getDayName(day)}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {format(day, 'dd/MM', { locale: ptBR })}
+                  </div>
+                </div>
+              ))}
+
+              {/* Time slots */}
+              {timeSlots.map((time) => (
+                <React.Fragment key={time}>
+                  <div className="bg-gray-50 border-b border-r p-3 text-sm font-medium text-gray-900 flex items-center sticky left-0 z-10">
+                    <div className="text-center w-full">
+                      {time}
+                    </div>
+                  </div>
+                  {weekDays.map((day) => {
+                    const schedule = getScheduleForSlot(day, time);
+                    const therapist = schedule ? getTherapistById(schedule.therapistId) : null;
+                    
+                    return (
+                      <EnhancedGridCell
+                        key={`${day.toISOString()}-${time}`}
+                        date={day}
+                        time={time}
+                        schedule={schedule || undefined}
+                        therapist={therapist || undefined}
+                        isSelected={schedule ? selectedSessions.includes(schedule.id) : false}
+                        isDragOver={false}
+                        onScheduleClick={onScheduleClick}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDrop={handleCellDrop(day, time)}
+                        onSelectToggle={toggleSessionSelection}
+                      />
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
