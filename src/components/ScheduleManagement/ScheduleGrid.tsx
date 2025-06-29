@@ -39,6 +39,8 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     bulkReschedule
   } = useScheduleGrid(selectedWeek, selectedChild);
 
+  console.log('ScheduleGrid rendered - weekSchedules:', weekSchedules);
+
   // Validação de segurança
   if (!selectedChild) {
     return (
@@ -72,10 +74,13 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   });
 
   const getScheduleForSlot = (date: Date, time: string) => {
-    return weekSchedules.find(schedule => 
+    const schedule = weekSchedules.find(schedule => 
       format(schedule.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
       schedule.time === time
     ) || null;
+    
+    console.log(`Looking for schedule on ${format(date, 'yyyy-MM-dd')} at ${time}:`, schedule);
+    return schedule;
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -137,9 +142,9 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                 </div>
               ))}
 
-              {/* Time slots */}
+              {/* Time slots - CORRIGIDO: substituindo React.Fragment por div */}
               {timeSlots.map((time) => (
-                <React.Fragment key={time}>
+                <div key={time} className="contents">
                   <div className="bg-gray-50 border-b border-r p-3 text-sm font-medium text-gray-900 flex items-center sticky left-0 z-10">
                     <div className="text-center w-full">
                       {time}
@@ -166,7 +171,7 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                       />
                     );
                   })}
-                </React.Fragment>
+                </div>
               ))}
             </div>
           </div>

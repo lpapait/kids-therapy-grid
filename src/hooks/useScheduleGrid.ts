@@ -43,9 +43,12 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
     return slots;
   }, [gridConfig]);
 
-  // Get schedules for the selected week and child - força recálculo sempre que schedules mudar
+  // Get schedules for the selected week and child - CORRIGIDO: dependências mais específicas
   const weekSchedules = useMemo(() => {
-    if (!selectedChild) return [];
+    if (!selectedChild) {
+      console.log('No child selected, returning empty schedules');
+      return [];
+    }
     
     const weekStart = new Date(selectedWeek);
     weekStart.setHours(0, 0, 0, 0);
@@ -57,17 +60,21 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
     
     const filtered = schedules.filter(schedule => {
       const scheduleDate = new Date(schedule.date);
-      return schedule.childId === selectedChild.id &&
-             scheduleDate >= weekStart &&
-             scheduleDate <= weekEnd;
+      const isForChild = schedule.childId === selectedChild.id;
+      const isInWeek = scheduleDate >= weekStart && scheduleDate <= weekEnd;
+      
+      console.log(`Schedule ${schedule.id}: childId=${schedule.childId}, date=${scheduleDate}, isForChild=${isForChild}, isInWeek=${isInWeek}`);
+      
+      return isForChild && isInWeek;
     });
     
     console.log('Filtered schedules:', filtered);
     return filtered;
-  }, [schedules, selectedChild, selectedWeek]);
+  }, [schedules, selectedChild?.id, selectedWeek.getTime()]); // CORRIGIDO: dependências mais específicas
 
   // Handle drag start
   const handleDragStart = useCallback((session: Schedule) => {
+    console.log('Drag started for session:', session.id);
     setDraggedSession(session);
   }, []);
 
@@ -88,6 +95,7 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
 
   // Handle session selection
   const toggleSessionSelection = useCallback((sessionId: string) => {
+    console.log('Toggling selection for session:', sessionId);
     setSelectedSessions(prev => 
       prev.includes(sessionId) 
         ? prev.filter(id => id !== sessionId)
