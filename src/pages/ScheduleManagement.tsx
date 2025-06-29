@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import WeekSelector from '@/components/WeekSelector';
 import SessionEditModal from '@/components/SessionEditModal';
@@ -5,7 +6,6 @@ import ScheduleHeader from '@/components/ScheduleManagement/ScheduleHeader';
 import ChildSelector from '@/components/ScheduleManagement/ChildSelector';
 import ScheduleSidebar from '@/components/ScheduleManagement/ScheduleSidebar';
 import ScheduleGrid from '@/components/ScheduleManagement/ScheduleGrid';
-import QuickScheduler from '@/components/ScheduleManagement/QuickScheduler';
 import LazyPanel from '@/components/LazyPanel';
 import { useData } from '@/contexts/DataContext';
 import { Child, Schedule } from '@/types';
@@ -27,6 +27,7 @@ const ScheduleManagement = () => {
     time: string;
     schedule?: Schedule;
   } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Debounce the selected week to avoid too many recalculations
   const debouncedSelectedWeek = useDebounce(selectedWeek, 300);
@@ -58,6 +59,8 @@ const ScheduleManagement = () => {
 
   const handleCloseModal = () => {
     setEditingSession(null);
+    // Force refresh of the grid to show new/updated schedules
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleDuplicateWeek = useDebouncedCallback(async () => {
@@ -73,8 +76,13 @@ const ScheduleManagement = () => {
     try {
       const duplicatedCount = await duplicateWeek(selectedChild, selectedWeek);
       if (duplicatedCount && duplicatedCount > 0) {
-        // Force re-render by updating the selected week state
-        setSelectedWeek(new Date(selectedWeek));
+        // Force refresh to show duplicated schedules
+        setRefreshKey(prev => prev + 1);
+        toast({
+          title: 'Semana duplicada',
+          description: `${duplicatedCount} agendamentos foram duplicados com sucesso.`,
+          variant: 'default'
+        });
       }
     } catch (error) {
       console.error('Erro ao duplicar semana:', error);
@@ -165,15 +173,6 @@ const ScheduleManagement = () => {
             onWeekChange={setSelectedWeek}
           />
 
-          <QuickScheduler
-            selectedChild={debouncedSelectedChild}
-            selectedWeek={debouncedSelectedWeek}
-            onScheduleCreated={() => {
-              // Force re-render to show new schedule
-              setSelectedWeek(new Date(selectedWeek.getTime()));
-            }}
-          />
-
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <LazyPanel className="lg:col-span-1">
               <ScheduleSidebar
@@ -190,6 +189,7 @@ const ScheduleManagement = () => {
 
             <LazyPanel className="lg:col-span-3">
               <ScheduleGrid
+                key={refreshKey}
                 selectedWeek={debouncedSelectedWeek}
                 selectedChild={debouncedSelectedChild}
                 onScheduleClick={handleScheduleClick}

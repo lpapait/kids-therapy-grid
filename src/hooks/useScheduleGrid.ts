@@ -43,15 +43,27 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
     return slots;
   }, [gridConfig]);
 
-  // Get schedules for the selected week and child
+  // Get schedules for the selected week and child - força recálculo sempre que schedules mudar
   const weekSchedules = useMemo(() => {
     if (!selectedChild) return [];
     
-    return schedules.filter(schedule => 
-      schedule.childId === selectedChild.id &&
-      schedule.date >= selectedWeek &&
-      schedule.date <= new Date(selectedWeek.getTime() + 6 * 24 * 60 * 60 * 1000)
-    );
+    const weekStart = new Date(selectedWeek);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(selectedWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    console.log('Filtering schedules for child:', selectedChild.id, 'between:', weekStart, 'and:', weekEnd);
+    console.log('All schedules:', schedules);
+    
+    const filtered = schedules.filter(schedule => {
+      const scheduleDate = new Date(schedule.date);
+      return schedule.childId === selectedChild.id &&
+             scheduleDate >= weekStart &&
+             scheduleDate <= weekEnd;
+    });
+    
+    console.log('Filtered schedules:', filtered);
+    return filtered;
   }, [schedules, selectedChild, selectedWeek]);
 
   // Handle drag start
@@ -62,6 +74,8 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
   // Handle drop
   const handleDrop = useCallback((date: Date, time: string) => {
     if (!draggedSession) return;
+    
+    console.log('Dropping session:', draggedSession.id, 'to:', date, time);
     
     updateSchedule(draggedSession.id, {
       date,
@@ -83,6 +97,7 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
 
   // Bulk operations
   const bulkCancel = useCallback((reason: string) => {
+    console.log('Bulk cancel sessions:', selectedSessions);
     selectedSessions.forEach(sessionId => {
       updateSchedule(sessionId, {
         status: 'cancelled',
@@ -93,6 +108,7 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
   }, [selectedSessions, updateSchedule]);
 
   const bulkReschedule = useCallback((newDate: Date, reason: string) => {
+    console.log('Bulk reschedule sessions:', selectedSessions, 'to:', newDate);
     selectedSessions.forEach(sessionId => {
       const session = schedules.find(s => s.id === sessionId);
       if (session) {
