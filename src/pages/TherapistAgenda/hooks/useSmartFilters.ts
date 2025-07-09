@@ -1,47 +1,42 @@
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { TherapistFilters } from '../types/therapist-agenda.types';
 import { SPECIALTIES } from '@/types';
 
-const initialFilters: TherapistFilters = {
-  searchQuery: '',
-  specialties: [],
-  statusFilter: [],
-  availabilityFilter: 'all'
-};
-
-export const useSmartFilters = () => {
-  const [filters, setFilters] = useState<TherapistFilters>(initialFilters);
-
+export const useSmartFilters = (
+  filters: TherapistFilters,
+  updateFilters: (filters: Partial<TherapistFilters>) => void
+) => {
   const updateSearchQuery = useCallback((query: string) => {
-    setFilters(prev => ({ ...prev, searchQuery: query }));
-  }, []);
+    updateFilters({ searchQuery: query });
+  }, [updateFilters]);
 
   const toggleSpecialty = useCallback((specialty: string) => {
-    setFilters(prev => ({
-      ...prev,
-      specialties: prev.specialties.includes(specialty)
-        ? prev.specialties.filter(s => s !== specialty)
-        : [...prev.specialties, specialty]
-    }));
-  }, []);
+    const newSpecialties = filters.specialties.includes(specialty)
+      ? filters.specialties.filter(s => s !== specialty)
+      : [...filters.specialties, specialty];
+    updateFilters({ specialties: newSpecialties });
+  }, [filters.specialties, updateFilters]);
 
   const toggleStatus = useCallback((status: 'available' | 'near_limit' | 'overloaded') => {
-    setFilters(prev => ({
-      ...prev,
-      statusFilter: prev.statusFilter.includes(status)
-        ? prev.statusFilter.filter(s => s !== status)
-        : [...prev.statusFilter, status]
-    }));
-  }, []);
+    const newStatusFilter = filters.statusFilter.includes(status)
+      ? filters.statusFilter.filter(s => s !== status)
+      : [...filters.statusFilter, status];
+    updateFilters({ statusFilter: newStatusFilter });
+  }, [filters.statusFilter, updateFilters]);
 
   const setAvailabilityFilter = useCallback((availability: TherapistFilters['availabilityFilter']) => {
-    setFilters(prev => ({ ...prev, availabilityFilter: availability }));
-  }, []);
+    updateFilters({ availabilityFilter: availability });
+  }, [updateFilters]);
 
   const clearAllFilters = useCallback(() => {
-    setFilters(initialFilters);
-  }, []);
+    updateFilters({
+      searchQuery: '',
+      specialties: [],
+      statusFilter: [],
+      availabilityFilter: 'all'
+    });
+  }, [updateFilters]);
 
   const hasActiveFilters = filters.searchQuery.length > 0 || 
                           filters.specialties.length > 0 || 

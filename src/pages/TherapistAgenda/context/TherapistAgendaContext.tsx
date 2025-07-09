@@ -1,0 +1,142 @@
+
+import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import { ViewMode, TherapistFilters, QuickScheduleRequest } from '../types/therapist-agenda.types';
+
+interface TherapistAgendaState {
+  selectedWeek: Date;
+  viewMode: ViewMode;
+  filters: TherapistFilters;
+  selectedTherapists: string[];
+  isLoading: boolean;
+  error: string | null;
+  quickScheduleModal: {
+    isOpen: boolean;
+    therapistId?: string;
+    request?: Partial<QuickScheduleRequest>;
+  };
+  agendaPreview: {
+    isOpen: boolean;
+    therapistId?: string;
+  };
+}
+
+type TherapistAgendaAction =
+  | { type: 'SET_SELECTED_WEEK'; payload: Date }
+  | { type: 'SET_VIEW_MODE'; payload: ViewMode }
+  | { type: 'UPDATE_FILTERS'; payload: Partial<TherapistFilters> }
+  | { type: 'SET_SELECTED_THERAPISTS'; payload: string[] }
+  | { type: 'TOGGLE_THERAPIST_SELECTION'; payload: string }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'OPEN_QUICK_SCHEDULE'; payload: { therapistId: string; request?: Partial<QuickScheduleRequest> } }
+  | { type: 'CLOSE_QUICK_SCHEDULE' }
+  | { type: 'OPEN_AGENDA_PREVIEW'; payload: string }
+  | { type: 'CLOSE_AGENDA_PREVIEW' }
+  | { type: 'RESET_FILTERS' };
+
+const initialState: TherapistAgendaState = {
+  selectedWeek: new Date(),
+  viewMode: 'grid',
+  filters: {
+    searchQuery: '',
+    specialties: [],
+    statusFilter: [],
+    availabilityFilter: 'all'
+  },
+  selectedTherapists: [],
+  isLoading: false,
+  error: null,
+  quickScheduleModal: {
+    isOpen: false
+  },
+  agendaPreview: {
+    isOpen: false
+  }
+};
+
+function therapistAgendaReducer(state: TherapistAgendaState, action: TherapistAgendaAction): TherapistAgendaState {
+  switch (action.type) {
+    case 'SET_SELECTED_WEEK':
+      return { ...state, selectedWeek: action.payload };
+    case 'SET_VIEW_MODE':
+      return { ...state, viewMode: action.payload };
+    case 'UPDATE_FILTERS':
+      return { 
+        ...state, 
+        filters: { ...state.filters, ...action.payload }
+      };
+    case 'SET_SELECTED_THERAPISTS':
+      return { ...state, selectedTherapists: action.payload };
+    case 'TOGGLE_THERAPIST_SELECTION':
+      return {
+        ...state,
+        selectedTherapists: state.selectedTherapists.includes(action.payload)
+          ? state.selectedTherapists.filter(id => id !== action.payload)
+          : [...state.selectedTherapists, action.payload]
+      };
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+    case 'SET_ERROR':
+      return { ...state, error: action.payload };
+    case 'OPEN_QUICK_SCHEDULE':
+      return {
+        ...state,
+        quickScheduleModal: {
+          isOpen: true,
+          therapistId: action.payload.therapistId,
+          request: action.payload.request
+        }
+      };
+    case 'CLOSE_QUICK_SCHEDULE':
+      return {
+        ...state,
+        quickScheduleModal: { isOpen: false }
+      };
+    case 'OPEN_AGENDA_PREVIEW':
+      return {
+        ...state,
+        agendaPreview: {
+          isOpen: true,
+          therapistId: action.payload
+        }
+      };
+    case 'CLOSE_AGENDA_PREVIEW':
+      return {
+        ...state,
+        agendaPreview: { isOpen: false }
+      };
+    case 'RESET_FILTERS':
+      return {
+        ...state,
+        filters: initialState.filters,
+        selectedTherapists: []
+      };
+    default:
+      return state;
+  }
+}
+
+interface TherapistAgendaContextType {
+  state: TherapistAgendaState;
+  dispatch: React.Dispatch<TherapistAgendaAction>;
+}
+
+const TherapistAgendaContext = createContext<TherapistAgendaContextType | undefined>(undefined);
+
+export const TherapistAgendaProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(therapistAgendaReducer, initialState);
+
+  return (
+    <TherapistAgendaContext.Provider value={{ state, dispatch }}>
+      {children}
+    </TherapistAgendaContext.Provider>
+  );
+};
+
+export const useTherapistAgendaContext = () => {
+  const context = useContext(TherapistAgendaContext);
+  if (context === undefined) {
+    throw new Error('useTherapistAgendaContext must be used within a TherapistAgendaProvider');
+  }
+  return context;
+};
