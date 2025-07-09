@@ -2,21 +2,13 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
-import { Child } from '@/types';
-import { useScheduleGrid } from '@/hooks/useScheduleGrid';
-import { useData } from '@/contexts/DataContext';
-import { getWeekDays, getDayName } from '@/lib/dateUtils';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import EnhancedGridCell from './EnhancedGridCell';
-import GridConfigPanel from './GridConfigPanel';
-import BulkOperationsPanel from './BulkOperationsPanel';
-import DragFeedbackTooltip from '@/components/DragFeedbackTooltip';
+import { Child, Schedule } from '@/types';
+import UnifiedScheduleGrid from '@/components/UnifiedGrid/UnifiedScheduleGrid';
 
 interface ScheduleGridProps {
   selectedWeek: Date;
   selectedChild: Child | null;
-  onScheduleClick: (date: Date, time: string, schedule?: any) => void;
+  onScheduleClick: (date: Date, time: string, schedule?: Schedule) => void;
 }
 
 const ScheduleGrid: React.FC<ScheduleGridProps> = ({
@@ -24,25 +16,6 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   selectedChild,
   onScheduleClick
 }) => {
-  const { getTherapistById } = useData();
-  
-  const {
-    gridConfig,
-    setGridConfig,
-    timeSlots,
-    weekSchedules,
-    draggedSession,
-    selectedSessions,
-    dragFeedback,
-    dragPosition,
-    handleDragStart,
-    handleDragOver,
-    handleDrop,
-    toggleSessionSelection,
-    bulkCancel,
-    bulkReschedule
-  } = useScheduleGrid(selectedWeek, selectedChild);
-
   // Validação de segurança
   if (!selectedChild) {
     return (
@@ -69,142 +42,35 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     );
   }
 
-  const weekDays = getWeekDays(selectedWeek).filter(day => {
-    if (gridConfig.showWeekends) return true;
-    const dayOfWeek = day.getDay();
-    return dayOfWeek !== 0 && dayOfWeek !== 6; // Exclude Saturday and Sunday
-  });
-
-  const getScheduleForSlot = (date: Date, time: string) => {
-    return weekSchedules.find(schedule => 
-      format(schedule.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
-      schedule.time === time
-    ) || null;
-  };
-
-  const handleCellDragOver = (date: Date, time: string) => (e: React.DragEvent) => {
-    handleDragOver(date, time, e);
-  };
-
-  const handleCellDrop = (date: Date, time: string) => (e: React.DragEvent) => {
-    e.preventDefault();
-    handleDrop(date, time);
-  };
-
-  const clearSelection = () => {
-    weekSchedules.forEach(schedule => {
-      if (selectedSessions.includes(schedule.id)) {
-        toggleSessionSelection(schedule.id);
-      }
-    });
+  const handleSelectTherapist = (therapist: any) => {
+    // Criar agendamento temporário com o terapeuta selecionado
+    const tempSchedule = {
+      id: '',
+      childId: selectedChild?.id || '',
+      therapistId: therapist.id,
+      date: new Date(),
+      time: '08:00',
+      duration: 60,
+      activity: `Sessão de ${therapist.specialties[0] || 'Terapia'}`,
+      status: 'scheduled' as const,
+      observations: '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      updatedBy: 'user'
+    };
+    onScheduleClick(new Date(), '08:00', tempSchedule);
   };
 
   return (
-    <div className="lg:col-span-3 space-y-4 animate-fade-in">
-      <GridConfigPanel
-        config={gridConfig}
-        onConfigChange={setGridConfig}
-      />
-
-      <BulkOperationsPanel
-        selectedCount={selectedSessions.length}
-        onBulkCancel={bulkCancel}
-        onBulkReschedule={bulkReschedule}
-        onClearSelection={clearSelection}
-      />
-
-      <Card className="hover-scale">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            <span>Grade de Agendamentos - {selectedChild.name}</span>
-          </CardTitle>
-          <CardDescription>
-            📱 <strong>Mobile:</strong> Toque para editar • 🖥️ <strong>Desktop:</strong> Arraste para mover, Ctrl+Click para selecionar múltiplos
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <div className="overflow-x-auto">
-              <div className="grid gap-0 min-w-[800px]" style={{ gridTemplateColumns: `120px repeat(${weekDays.length}, 1fr)` }}>
-                {/* Header */}
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-r p-3 font-medium text-gray-900 sticky left-0 z-10">
-                  Horário
-                </div>
-                {weekDays.map((day) => (
-                  <div key={day.toISOString()} className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-r p-3 text-center min-w-[160px]">
-                    <div className="font-medium text-gray-900">
-                      {getDayName(day)}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {format(day, 'dd/MM', { locale: ptBR })}
-                    </div>
-                  </div>
-                ))}
-
-                {/* Time slots */}
-                {timeSlots.map((time) => (
-                  <div key={time} className="contents">
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-r p-3 text-sm font-medium text-gray-900 flex items-center sticky left-0 z-10">
-                      <div className="text-center w-full">
-                        {time}
-                      </div>
-                    </div>
-                    {weekDays.map((day) => {
-                      const schedule = getScheduleForSlot(day, time);
-                      const therapist = schedule ? getTherapistById(schedule.therapistId) : null;
-                      const isDragOverTarget = draggedSession && format(day, 'yyyy-MM-dd') + time === format(day, 'yyyy-MM-dd') + time;
-                      
-                      return (
-                        <EnhancedGridCell
-                          key={`${day.toISOString()}-${time}`}
-                          date={day}
-                          time={time}
-                          schedule={schedule || undefined}
-                          therapist={therapist || undefined}
-                          isSelected={schedule ? selectedSessions.includes(schedule.id) : false}
-                          isDragOver={isDragOverTarget}
-                          selectedChild={selectedChild}
-                          selectedWeek={selectedWeek}
-                          onScheduleClick={onScheduleClick}
-                          onDragStart={handleDragStart}
-                          onDragOver={handleCellDragOver(day, time)}
-                          onDrop={handleCellDrop(day, time)}
-                          onSelectToggle={toggleSessionSelection}
-                          onSelectTherapist={(therapist) => {
-                            // Criar agendamento temporário com o terapeuta selecionado
-                            const tempSchedule = {
-                              id: '',
-                              childId: selectedChild?.id || '',
-                              therapistId: therapist.id,
-                              date: day,
-                              time: time,
-                              duration: 60,
-                              activity: `Sessão de ${therapist.specialties[0] || 'Terapia'}`,
-                              status: 'scheduled' as const,
-                              observations: '',
-                              createdAt: new Date(),
-                              updatedAt: new Date(),
-                              updatedBy: 'user'
-                            };
-                            onScheduleClick(day, time, tempSchedule);
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Drag Feedback Tooltip */}
-      <DragFeedbackTooltip
-        impact={dragFeedback}
-        position={dragPosition}
-        visible={!!draggedSession && !!dragFeedback}
+    <div className="lg:col-span-3">
+      <UnifiedScheduleGrid
+        selectedWeek={selectedWeek}
+        mode="child"
+        targetEntity={selectedChild}
+        onScheduleClick={onScheduleClick}
+        onSelectTherapist={handleSelectTherapist}
+        showFilters={true}
+        showActions={true}
       />
     </div>
   );
