@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import WeekSelector from '@/components/WeekSelector';
 import ScheduleGridSkeleton from '@/components/ScheduleManagement/ScheduleGridSkeleton';
 import SessionEditModal from '@/components/SessionEditModal';
@@ -15,6 +15,8 @@ import { useTherapyCoverage } from '@/hooks/useTherapyCoverage';
 import { useOptimizedWorkload } from '@/hooks/useOptimizedWorkload';
 import { useDebounce, useDebouncedCallback } from '@/hooks/useDebounce';
 import { useWeekDuplication } from '@/hooks/useWeekDuplication';
+import { useToast } from '@/hooks/use-toast';
+import { Child, Schedule } from '@/types/index';
 
 const ScheduleManagement = () => {
   const { children, getTherapistById, schedules } = useData();
