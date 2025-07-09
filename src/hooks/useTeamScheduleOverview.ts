@@ -15,7 +15,7 @@ interface TherapistScheduleOverview {
   weeklyGrid: WeeklySlot[][];
   availableSlots: number;
   sessionsCount: number;
-  administrativeHours?: number;
+  administrativeHours: number;
 }
 
 interface WeeklySlot {
@@ -98,6 +98,9 @@ export const useTeamScheduleOverview = (
         status = 'available';
       }
 
+      // Calculate administrative hours
+      const administrativeHours = Math.round((administrativeSessions.reduce((total, s) => total + (s.duration || 60), 0) / 60) * 10) / 10;
+
       // Build weekly grid (5 days x 9 hours)
       const weeklyGrid: WeeklySlot[][] = [];
       
@@ -170,7 +173,7 @@ export const useTeamScheduleOverview = (
         weeklyGrid,
         availableSlots,
         sessionsCount: regularSessions.length,
-        administrativeHours: Math.round((administrativeSessions.reduce((total, s) => total + (s.duration || 60), 0) / 60) * 10) / 10
+        administrativeHours
       };
     });
   }, [filteredTherapists, schedules, children, selectedWeek]);
