@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, TrendingUp, Users, Clock, Download } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
-import { useReportExport } from '@/hooks/useReportExport';
+
 import { isSameWeek } from '@/lib/dateUtils';
 
 interface UtilizationReportPanelProps {
@@ -14,7 +14,7 @@ interface UtilizationReportPanelProps {
 
 const UtilizationReportPanel: React.FC<UtilizationReportPanelProps> = ({ selectedWeek }) => {
   const { therapists, schedules } = useData();
-  const { exportUtilizationReport } = useReportExport();
+  
 
   const utilizationData = therapists.map(therapist => {
     const weekSchedules = schedules.filter(schedule => 
@@ -49,7 +49,8 @@ const UtilizationReportPanel: React.FC<UtilizationReportPanelProps> = ({ selecte
   const overloadedCount = utilizationData.filter(data => data.status === 'overloaded').length;
 
   const handleExportReport = async () => {
-    await exportUtilizationReport(selectedWeek);
+    // Funcionalidade de export removida
+    console.log('Export functionality removed');
   };
 
   return (

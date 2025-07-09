@@ -105,23 +105,6 @@ export interface Schedule {
   updatedBy: string;
 }
 
-export interface ScheduleHistory {
-  id: string;
-  scheduleId: string;
-  changeType: 'created' | 'updated' | 'cancelled' | 'rescheduled' | 'completed';
-  previousValues: Partial<Schedule>;
-  newValues: Partial<Schedule>;
-  changedFields: string[];
-  reason?: string;
-  changedBy: string;
-  changedAt: Date;
-}
-
-export interface ScheduleChange {
-  field: keyof Schedule;
-  oldValue: any;
-  newValue: any;
-}
 
 export interface TherapyCoverage {
   specialty: string;

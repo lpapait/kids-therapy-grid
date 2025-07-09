@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Schedule, Child } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
-import SessionHistoryModal from '../SessionHistoryModal';
+
 import SessionEditForm from './SessionEditForm';
 import SessionEditHeader from './SessionEditHeader';
 
@@ -37,7 +37,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
     duration: schedule?.duration || 60
   });
 
-  const [showHistory, setShowHistory] = useState(false);
+  
 
   useEffect(() => {
     if (schedule) {
@@ -108,7 +108,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
               <SessionEditHeader
                 schedule={schedule}
                 child={child}
-                onShowHistory={() => setShowHistory(true)}
               />
             </DialogTitle>
           </DialogHeader>
@@ -126,13 +125,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
         </DialogContent>
       </Dialog>
 
-      {schedule && showHistory && (
-        <SessionHistoryModal
-          isOpen={showHistory}
-          onClose={() => setShowHistory(false)}
-          schedule={schedule}
-        />
-      )}
     </>
   );
 };

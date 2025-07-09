@@ -15,7 +15,7 @@ import ChildrenManagement from "@/pages/ChildrenManagement";
 import TherapistManagement from "@/pages/TherapistManagement";
 import ScheduleManagement from "@/pages/ScheduleManagement";
 import TherapistAgenda from "@/pages/TherapistAgenda";
-import AuditPage from "@/pages/AuditPage";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -117,13 +117,6 @@ const AppContent = () => {
           </ProtectedRoute>
         } />
         
-        <Route path="/audit" element={
-          <ProtectedRoute>
-            <ModeratorRoute>
-              <AuditPage />
-            </ModeratorRoute>
-          </ProtectedRoute>
-        } />
         
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -11,7 +11,7 @@ import {
   Users, 
   UserPlus, 
   Eye,
-  History,
+  
   Home
 } from 'lucide-react';
 import {
@@ -44,7 +44,7 @@ const AppSidebar = () => {
     { path: '/therapists', label: 'Terapeutas', icon: UserPlus },
     { path: '/schedule', label: 'Agendamentos', icon: Calendar },
     { path: '/therapist-agenda', label: 'Ver Agendas', icon: Eye },
-    { path: '/audit', label: 'Auditoria', icon: History },
+    
   ];
 
   const therapistMenuItems = [
