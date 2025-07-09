@@ -1,4 +1,6 @@
 
+import { Therapist } from '@/types';
+
 export type ViewMode = 'grid' | 'list' | 'calendar' | 'capacity';
 
 export interface TherapistFilters {
@@ -9,14 +11,7 @@ export interface TherapistFilters {
 }
 
 export interface TherapistOverviewCard {
-  therapist: {
-    id: string;
-    name: string;
-    professionalType: string;
-    specialties: string[];
-    color: string;
-    weeklyWorkloadHours: number;
-  };
+  therapist: Therapist; // Use full Therapist interface
   currentWeekHours: number;
   maxWeeklyHours: number;
   availableHours: number;
