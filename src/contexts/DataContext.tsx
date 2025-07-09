@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Child, Therapist, Schedule, ScheduleTemplate } from '@/types';
 import { assignTherapistColor } from '@/lib/therapistColors';
@@ -124,7 +125,6 @@ const mockTherapists: Therapist[] = [
 
 const generateId = () => Date.now().toString();
 
-
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [childrenData, setChildrenData] = useState<Child[]>(mockChildren);
   const [therapists, setTherapists] = useState<Therapist[]>(mockTherapists);
@@ -163,21 +163,53 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTherapists(prev => prev.filter(therapist => therapist.id !== id));
   };
 
+  // MELHORADA: Função addSchedule com melhor normalização de data
   const addSchedule = (schedule: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) => {
+    // Normalizar a data para evitar problemas de timezone
+    const normalizedDate = new Date(schedule.date);
+    normalizedDate.setHours(0, 0, 0, 0);
+    
     const newSchedule: Schedule = {
       ...schedule,
+      date: normalizedDate, // Usar data normalizada
       id: generateId(),
       createdAt: new Date(),
       updatedAt: new Date()
     };
     
-    setSchedules(prev => [...prev, newSchedule]);
+    console.log('=== ADDING SCHEDULE DEBUG ===');
+    console.log('Original schedule data:', schedule);
+    console.log('Normalized schedule:', newSchedule);
+    console.log('Date normalized to:', normalizedDate.toISOString());
+    
+    setSchedules(prev => {
+      const updated = [...prev, newSchedule];
+      console.log('Updated schedules array:', updated.length);
+      console.log('All schedules:', updated.map(s => ({
+        id: s.id,
+        childId: s.childId,
+        date: s.date.toISOString(),
+        time: s.time,
+        activity: s.activity
+      })));
+      console.log('=== END ADDING SCHEDULE DEBUG ===');
+      return updated;
+    });
   };
 
   const updateSchedule = (id: string, updates: Partial<Schedule>, reason?: string) => {
     setSchedules(prev => prev.map(schedule => {
       if (schedule.id === id) {
-        return { ...schedule, ...updates, updatedAt: new Date() };
+        const updatedSchedule = { ...schedule, ...updates, updatedAt: new Date() };
+        
+        // Normalizar data se foi atualizada
+        if (updates.date) {
+          const normalizedDate = new Date(updates.date);
+          normalizedDate.setHours(0, 0, 0, 0);
+          updatedSchedule.date = normalizedDate;
+        }
+        
+        return updatedSchedule;
       }
       return schedule;
     }));

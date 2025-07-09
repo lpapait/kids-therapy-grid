@@ -58,14 +58,46 @@ const UnifiedScheduleGrid: React.FC<UnifiedScheduleGridProps> = ({
     return dayOfWeek !== 0 && dayOfWeek !== 6;
   });
 
+  // MELHORADA: Função para encontrar agendamento no slot
   const getScheduleForSlot = (date: Date, time: string) => {
-    return filteredSchedules.find(schedule => 
-      format(schedule.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
-      schedule.time === time
-    ) || null;
+    console.log('=== GET SCHEDULE FOR SLOT DEBUG ===');
+    console.log('Looking for slot:', {
+      date: format(date, 'yyyy-MM-dd'),
+      time: time
+    });
+    console.log('Available schedules:', filteredSchedules.length);
+    
+    const found = filteredSchedules.find(schedule => {
+      const scheduleDate = new Date(schedule.date);
+      const normalizedScheduleDate = format(scheduleDate, 'yyyy-MM-dd');
+      const normalizedSlotDate = format(date, 'yyyy-MM-dd');
+      
+      const dateMatch = normalizedScheduleDate === normalizedSlotDate;
+      const timeMatch = schedule.time === time;
+      
+      console.log('Checking schedule:', {
+        id: schedule.id,
+        scheduleDate: normalizedScheduleDate,
+        slotDate: normalizedSlotDate,
+        scheduleTime: schedule.time,
+        slotTime: time,
+        dateMatch,
+        timeMatch,
+        overallMatch: dateMatch && timeMatch
+      });
+      
+      return dateMatch && timeMatch;
+    });
+    
+    console.log('Found schedule:', found ? found.id : 'none');
+    console.log('=== END GET SCHEDULE DEBUG ===');
+    
+    return found || null;
   };
 
   const handleCellClick = (date: Date, time: string, schedule?: Schedule, e?: React.MouseEvent) => {
+    console.log('Cell clicked:', { date: format(date, 'yyyy-MM-dd'), time, schedule: schedule?.id });
+    
     if (schedule && e?.ctrlKey) {
       toggleSelection(schedule.id);
     } else if (onScheduleClick) {

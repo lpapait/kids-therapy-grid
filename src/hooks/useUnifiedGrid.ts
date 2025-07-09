@@ -2,7 +2,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { Schedule, Child, Therapist } from '@/types';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, startOfWeek, endOfWeek } from 'date-fns';
 import { useDragFeedback } from '@/hooks/useDragFeedback';
 import { useToast } from '@/hooks/use-toast';
 
@@ -63,31 +63,68 @@ export const useUnifiedGrid = (
     return slots;
   }, [config.timeSlotDuration, config.startTime, config.endTime]);
 
-  // Filter schedules based on mode and filters
+  // Filter schedules based on mode and filters - CORRIGIDO
   const filteredSchedules = useMemo(() => {
-    let filtered = schedules.filter(schedule => {
-      const scheduleDate = new Date(schedule.date);
-      const weekStart = new Date(selectedWeek);
-      weekStart.setHours(0, 0, 0, 0);
-      const weekEnd = new Date(selectedWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
-      weekEnd.setHours(23, 59, 59, 999);
+    console.log('=== UNIFIED GRID FILTER DEBUG ===');
+    console.log('Total schedules in context:', schedules.length);
+    console.log('Selected week:', selectedWeek);
+    console.log('Mode:', mode);
+    console.log('Target entity:', targetEntity?.name);
 
-      if (scheduleDate < weekStart || scheduleDate > weekEnd) return false;
+    // Calcular início e fim da semana corretamente
+    const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 }); // Segunda-feira
+    const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 1 }); // Domingo
+    
+    console.log('Week range:', {
+      start: format(weekStart, 'yyyy-MM-dd'),
+      end: format(weekEnd, 'yyyy-MM-dd')
+    });
+
+    let filtered = schedules.filter(schedule => {
+      // Normalizar data do agendamento
+      const scheduleDate = new Date(schedule.date);
+      const normalizedScheduleDate = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+      
+      console.log('Checking schedule:', {
+        id: schedule.id,
+        date: format(scheduleDate, 'yyyy-MM-dd'),
+        normalizedDate: format(normalizedScheduleDate, 'yyyy-MM-dd'),
+        childId: schedule.childId,
+        therapistId: schedule.therapistId,
+        activity: schedule.activity
+      });
+
+      // Verificar se está dentro da semana
+      const isInWeek = normalizedScheduleDate >= weekStart && normalizedScheduleDate <= weekEnd;
+      console.log('Is in week?', isInWeek);
+
+      if (!isInWeek) return false;
 
       // Mode-specific filtering
       if (mode === 'child' && targetEntity) {
-        if (schedule.childId !== targetEntity.id) return false;
+        const matchesChild = schedule.childId === targetEntity.id;
+        console.log('Matches child?', matchesChild, 'Expected:', targetEntity.id, 'Got:', schedule.childId);
+        if (!matchesChild) return false;
       } else if (mode === 'therapist' && targetEntity) {
-        if (schedule.therapistId !== targetEntity.id) return false;
+        const matchesTherapist = schedule.therapistId === targetEntity.id;
+        console.log('Matches therapist?', matchesTherapist);
+        if (!matchesTherapist) return false;
       }
 
-      // Apply filters
-      if (filters.status && !filters.status.includes(schedule.status)) return false;
-      if (filters.therapists && !filters.therapists.includes(schedule.therapistId)) return false;
+      // Apply additional filters
+      if (filters.status && !filters.status.includes(schedule.status)) {
+        console.log('Filtered out by status');
+        return false;
+      }
+      if (filters.therapists && !filters.therapists.includes(schedule.therapistId)) {
+        console.log('Filtered out by therapist filter');
+        return false;
+      }
       
       if (filters.specialties) {
         const therapist = getTherapistById(schedule.therapistId);
         if (!therapist || !filters.specialties.some(spec => therapist.specialties.includes(spec))) {
+          console.log('Filtered out by specialty');
           return false;
         }
       }
@@ -100,12 +137,23 @@ export const useUnifiedGrid = (
           !therapist?.name.toLowerCase().includes(query) &&
           !schedule.observations?.toLowerCase().includes(query)
         ) {
+          console.log('Filtered out by search');
           return false;
         }
       }
 
+      console.log('Schedule PASSED all filters');
       return true;
     });
+
+    console.log('Filtered schedules count:', filtered.length);
+    console.log('Filtered schedules:', filtered.map(s => ({
+      id: s.id,
+      date: format(new Date(s.date), 'yyyy-MM-dd'),
+      time: s.time,
+      activity: s.activity
+    })));
+    console.log('=== END FILTER DEBUG ===');
 
     return filtered;
   }, [schedules, selectedWeek, mode, targetEntity, filters, getTherapistById]);
