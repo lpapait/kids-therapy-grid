@@ -91,12 +91,14 @@ const GridCellContent: React.FC<GridCellContentProps> = ({
             </Badge>
             
             {workloadData && workloadData.status !== 'available' && (
-              <AlertTriangle 
+              <div 
                 className={`h-3 w-3 ${
                   workloadData.status === 'overloaded' ? 'text-red-500' : 'text-yellow-500'
                 }`}
                 title={`Carga: ${workloadData.hoursScheduled}h/${workloadData.maxHours}h`}
-              />
+              >
+                <AlertTriangle className="h-3 w-3" />
+              </div>
             )}
           </div>
 

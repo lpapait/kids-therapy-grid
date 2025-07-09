@@ -4,7 +4,7 @@ import { Schedule, Child, Therapist } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { getTherapistColorStyles } from '@/lib/therapistColors';
 import GridCellContent from './GridCellContent';
-import SlotSuggestionPopover from '../SlotSummary/SlotSummaryPopover';
+import EmptySlotButton from './EmptySlotButton';
 
 interface UnifiedGridCellProps {
   date: Date;
@@ -60,12 +60,6 @@ const UnifiedGridCell: React.FC<UnifiedGridCellProps> = ({
     onDrop(date, time);
   };
 
-  const handleSelectTherapist = (therapist: Therapist) => {
-    if (onSelectTherapist) {
-      onSelectTherapist(therapist);
-    }
-  };
-
   return (
     <div
       className={`
@@ -92,17 +86,12 @@ const UnifiedGridCell: React.FC<UnifiedGridCellProps> = ({
           onDragStart={handleDragStart}
         />
       ) : (
-        <SlotSuggestionPopover
+        <EmptySlotButton
           selectedChild={mode === 'child' ? (targetEntity as Child) : null}
-          selectedWeek={date}
-          slotDate={date}
-          slotTime={time}
-          onSelectTherapist={handleSelectTherapist}
-        >
-          <button className="w-8 h-8 rounded-full bg-muted hover:bg-primary/20 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
-            +
-          </button>
-        </SlotSuggestionPopover>
+          date={date}
+          time={time}
+          onSelectTherapist={onSelectTherapist}
+        />
       )}
     </div>
   );
