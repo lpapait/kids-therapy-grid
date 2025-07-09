@@ -11,7 +11,7 @@ interface SpecialtyDistributionProps {
 
 const SpecialtyDistribution: React.FC<SpecialtyDistributionProps> = ({ selectedWeek }) => {
   const coverageData = useTherapyCoverage(selectedWeek);
-  const distributionData = useTherapyDistribution(coverageData);
+  const distributionData = useTherapyDistribution(coverageData, selectedWeek);
 
   const maxSessions = Math.max(...distributionData.map(d => d.value), 1);
 
