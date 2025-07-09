@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Plus, User, Clock, Target } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { Child, Therapist } from '@/types';
@@ -27,17 +27,15 @@ const SlotSuggestionPopover: React.FC<SlotSuggestionPopoverProps> = ({
   const { children } = useData();
   const [open, setOpen] = useState(false);
 
-  // Encontrar crianças que precisam das especialidades do terapeuta
   const suggestedChildren = children.filter(child =>
     child.weeklyTherapies.some(therapy =>
       therapist.specialties.includes(therapy.specialty)
     )
-  ).slice(0, 5); // Limitar a 5 sugestões
+  ).slice(0, 5);
 
   const utilizationPercentage = (currentWorkload / maxWorkload) * 100;
 
   const handleScheduleSession = (child: Child, specialty: string) => {
-    // Implementar lógica de agendamento
     console.log('Agendar sessão:', { child: child.name, specialty, date, time });
     setOpen(false);
   };
@@ -66,7 +64,6 @@ const SlotSuggestionPopover: React.FC<SlotSuggestionPopoverProps> = ({
             </div>
           </div>
 
-          {/* Indicador de Carga */}
           <Card className="bg-gray-50">
             <CardContent className="p-3">
               <div className="flex items-center justify-between text-xs">
@@ -87,7 +84,6 @@ const SlotSuggestionPopover: React.FC<SlotSuggestionPopoverProps> = ({
             </CardContent>
           </Card>
 
-          {/* Lista de Crianças Sugeridas */}
           <div className="space-y-2">
             <h5 className="text-sm font-medium">Crianças que precisam atender:</h5>
             {suggestedChildren.length > 0 ? (

@@ -15,7 +15,6 @@ interface SessionTooltipProps {
 const SessionTooltip: React.FC<SessionTooltipProps> = ({ children, schedule, child }) => {
   const age = calculateAge(child.birthDate);
   
-  // Calcular progresso semanal (simulado - em implementação real viria dos dados)
   const weeklyProgress = child.weeklyTherapies.find(therapy => 
     schedule.activity.includes(therapy.specialty)
   );

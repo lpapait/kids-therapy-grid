@@ -7,7 +7,7 @@ import { Schedule, Child, Therapist } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-interface AgendaExportProps {
+interface ExportActionsProps {
   therapist: Therapist;
   schedules: Schedule[];
   selectedWeek: Date;
@@ -21,7 +21,7 @@ interface AgendaExportProps {
   };
 }
 
-const AgendaExport: React.FC<AgendaExportProps> = ({
+const ExportActions: React.FC<ExportActionsProps> = ({
   therapist,
   schedules,
   selectedWeek,
@@ -75,7 +75,6 @@ const AgendaExport: React.FC<AgendaExportProps> = ({
   };
 
   const generatePDFReport = () => {
-    // Implementação simplificada - em produção usaria uma biblioteca como jsPDF
     const reportContent = `
 RELATÓRIO SEMANAL - ${therapist.name}
 Semana de ${format(selectedWeek, 'dd/MM/yyyy', { locale: ptBR })}
@@ -112,7 +111,7 @@ ${schedules.map(schedule => {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm">
           <Download className="h-4 w-4 mr-2" />
-          Exportar Agenda
+          Exportar
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -129,4 +128,4 @@ ${schedules.map(schedule => {
   );
 };
 
-export default AgendaExport;
+export default ExportActions;

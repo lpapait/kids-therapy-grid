@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Edit, Trash2, User, CheckCircle, FileText } from 'lucide-react';
 import { Schedule, Child } from '@/types';
 
-interface SessionActionsProps {
+interface ActionsDropdownProps {
   schedule: Schedule;
   child: Child;
   onEdit: (schedule: Schedule) => void;
@@ -14,7 +14,7 @@ interface SessionActionsProps {
   onMarkCompleted: (schedule: Schedule) => void;
 }
 
-const SessionActions: React.FC<SessionActionsProps> = ({
+const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
   schedule,
   child,
   onEdit,
@@ -72,4 +72,4 @@ const SessionActions: React.FC<SessionActionsProps> = ({
   );
 };
 
-export default SessionActions;
+export default ActionsDropdown;

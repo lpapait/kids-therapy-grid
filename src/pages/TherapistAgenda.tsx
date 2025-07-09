@@ -1,9 +1,9 @@
 
 import React from 'react';
-import TherapistAgendaViewer from '@/components/TherapistAgendaViewer';
 import CapacityMonitorWidget from '@/components/CapacityMonitorWidget';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
+import AgendaViewer from '@/features/therapist-agenda/components/AgendaViewer';
 
 const TherapistAgenda = () => {
   const today = new Date();
@@ -23,7 +23,6 @@ const TherapistAgenda = () => {
         </div>
       </div>
 
-      {/* Capacity Monitor Widget */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <CapacityMonitorWidget 
@@ -51,7 +50,7 @@ const TherapistAgenda = () => {
         </Card>
       </div>
 
-      <TherapistAgendaViewer />
+      <AgendaViewer />
     </div>
   );
 };
