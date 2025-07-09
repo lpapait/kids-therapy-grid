@@ -1,4 +1,3 @@
-
 // Paleta de cores predefinidas para terapeutas
 export const THERAPIST_COLORS = [
   '#3B82F6', // Azul
@@ -12,6 +11,24 @@ export const THERAPIST_COLORS = [
   '#EC4899', // Rosa
   '#6B7280', // Cinza
 ];
+
+// Paleta de cores para especialidades terapêuticas
+export const SPECIALTY_COLORS: Record<string, string> = {
+  'Fonoaudiologia': '#3B82F6', // Azul
+  'Musicoterapia': '#8B5CF6', // Roxo
+  'Terapia Ocupacional': '#10B981', // Verde
+  'Fisioterapia': '#F97316', // Laranja
+  'Psicologia': '#EC4899', // Rosa
+  'Psicopedagogia': '#06B6D4', // Ciano
+  'Neuropsicologia': '#84CC16', // Lima
+  'Terapia Comportamental': '#F59E0B', // Amarelo
+  'Integração Sensorial': '#EF4444', // Vermelho
+  'Hidroterapia': '#6B7280', // Cinza
+};
+
+export const getSpecialtyColor = (specialty: string): string => {
+  return SPECIALTY_COLORS[specialty] || '#6B7280'; // Cinza como fallback
+};
 
 export const getTherapistColorStyles = (color: string, isOwn: boolean = false) => {
   const opacity = isOwn ? '0.2' : '0.1';

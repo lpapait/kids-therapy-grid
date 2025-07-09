@@ -4,6 +4,7 @@ import TherapyCoveragePanel from '@/components/TherapyCoveragePanel';
 import EnhancedTherapistWorkloadPanel from '@/components/EnhancedTherapistWorkloadPanel';
 import WorkloadAlertsPanel from '@/components/WorkloadAlertsPanel';
 import UtilizationReportPanel from '@/components/UtilizationReportPanel';
+import TherapistWorkloadDistribution from '@/components/TeamCapacityDashboard/TherapistWorkloadDistribution';
 
 interface ScheduleSidebarProps {
   child: Child | null;
@@ -65,7 +66,7 @@ const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
         onAlertClick={onAlertClick}
       />
 
-      <UtilizationReportPanel
+      <TherapistWorkloadDistribution
         selectedWeek={selectedWeek}
       />
     </div>
