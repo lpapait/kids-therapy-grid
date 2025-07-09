@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,13 +18,29 @@ import QuickActions from './Dashboard/QuickActions';
 // Dashboard metrics hook
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import { useData } from '@/contexts/DataContext';
+import { useTherapistWorkload } from '@/hooks/useTherapistWorkload';
 
-const Dashboard = () => {
+interface Notification {
+  id: string;
+  type: 'cancelled' | 'rescheduled' | 'new_child' | 'workload_alert';
+  message: string;
+  timestamp: Date;
+  read: boolean;
+}
+
+const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { children, therapists } = useData();
   const [selectedWeek, setSelectedWeek] = useState(new Date());
   
   const dashboardMetrics = useDashboardMetrics(selectedWeek);
+
+  // Import new therapist dashboard components
+  const TherapistWelcome = React.lazy(() => import('./Dashboard/TherapistWelcome'));
+  const TodaySessionsList = React.lazy(() => import('./Dashboard/TodaySessionsList'));
+  const WeeklyWorkload = React.lazy(() => import('./Dashboard/WeeklyWorkload'));
+  const RecentNotifications = React.lazy(() => import('./Dashboard/RecentNotifications'));
+  const QuickActionsTherapist = React.lazy(() => import('./Dashboard/QuickActionsTherapist'));
 
   if (user?.role === 'moderator') {
     return (
@@ -122,25 +137,81 @@ const Dashboard = () => {
     );
   }
 
-  // Therapist Dashboard - Keep existing functionality
+  // Therapist Dashboard - New personalized experience
+  if (user?.id) {
+    const workloadData = useTherapistWorkload(user.id, selectedWeek);
+    
+    // Mock notifications for demo
+    const mockNotifications = [
+      {
+        id: '1',
+        type: 'rescheduled' as const,
+        message: 'Sessão com Arthur remarcada para quinta, 10h',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        read: false
+      },
+      {
+        id: '2',
+        type: 'cancelled' as const,
+        message: 'Sessão com Isabella foi cancelada para hoje às 14h',
+        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+        read: false
+      },
+      {
+        id: '3',
+        type: 'new_child' as const,
+        message: 'Nova criança Gabriel foi atribuída às suas sessões',
+        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+        read: true
+      }
+    ];
+
+    return (
+      <div className="space-y-6">
+        <React.Suspense fallback={<div>Carregando...</div>}>
+          {/* Welcome Block */}
+          <TherapistWelcome 
+            user={user}
+            todaySessionsCount={dashboardMetrics.todaySchedules.length}
+          />
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Sessions and Workload */}
+            <div className="lg:col-span-2 space-y-6">
+              <TodaySessionsList 
+                sessions={dashboardMetrics.todaySchedules}
+              />
+              
+              {workloadData && (
+                <WeeklyWorkload 
+                  hoursScheduled={workloadData.hoursScheduled}
+                  maxHours={workloadData.maxHours}
+                />
+              )}
+            </div>
+
+            {/* Right Column - Notifications and Actions */}
+            <div className="space-y-6">
+              <RecentNotifications 
+                notifications={mockNotifications}
+              />
+              
+              <QuickActionsTherapist />
+            </div>
+          </div>
+        </React.Suspense>
+      </div>
+    );
+  }
+
+  // Fallback
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Minha Agenda</h1>
-          <p className="text-gray-600">Sua agenda semanal de atendimentos</p>
-        </div>
-        <Badge variant="secondary" className="text-sm">
-          Terapeuta
-        </Badge>
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Bem-vindo ao Sistema</h1>
+        <p className="text-gray-600">Faça login para acessar sua área personalizada</p>
       </div>
-
-      {user?.id && (
-        <WeeklyView 
-          therapistId={user.id} 
-          showWeekSelector={true}
-        />
-      )}
     </div>
   );
 };
