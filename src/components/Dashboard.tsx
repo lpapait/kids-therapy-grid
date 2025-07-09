@@ -1,171 +1,127 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useData } from '@/contexts/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Users, UserPlus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Users, UserPlus, TrendingUp } from 'lucide-react';
 import TherapistWeeklyView from './TherapistWeeklyView';
+import WeekSelector from './WeekSelector';
+
+// New dashboard components
+import TodaysSessions from './Dashboard/TodaysSessions';
+import SystemAlerts from './Dashboard/SystemAlerts';
+import SpecialtyDistribution from './Dashboard/SpecialtyDistribution';
+import TherapistRanking from './Dashboard/TherapistRanking';
+import WeeklyComparison from './Dashboard/WeeklyComparison';
+import PlanningPendencies from './Dashboard/PlanningPendencies';
+import QuickActions from './Dashboard/QuickActions';
+
+// Dashboard metrics hook
+import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
+import { useData } from '@/contexts/DataContext';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { children, therapists, schedules } = useData();
-
-  const today = new Date();
-  const todaySchedules = schedules.filter(schedule => {
-    const scheduleDate = new Date(schedule.date);
-    return scheduleDate.toDateString() === today.toDateString();
-  });
-
-  const thisWeekSchedules = schedules.filter(schedule => {
-    const scheduleDate = new Date(schedule.date);
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay());
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    
-    return scheduleDate >= weekStart && scheduleDate <= weekEnd;
-  });
-
-  const completedSessions = thisWeekSchedules.filter(s => s.status === 'completed').length;
-  const cancelledSessions = thisWeekSchedules.filter(s => s.status === 'cancelled').length;
+  const { children, therapists } = useData();
+  const [selectedWeek, setSelectedWeek] = useState(new Date());
+  
+  const dashboardMetrics = useDashboardMetrics(selectedWeek);
 
   if (user?.role === 'moderator') {
     return (
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600">Visão geral da clínica de reabilitação</p>
+            <h1 className="text-3xl font-bold text-gray-900">Central de Comando</h1>
+            <p className="text-gray-600">Painel estratégico e operacional da clínica</p>
           </div>
-          <Badge variant="secondary" className="text-sm">
-            Moderador
-          </Badge>
+          <div className="flex items-center space-x-4">
+            <Badge variant="secondary" className="text-sm">
+              Moderador
+            </Badge>
+            <WeekSelector 
+              selectedWeek={selectedWeek}
+              onWeekChange={setSelectedWeek}
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
+        {/* Top Priority Section - Alerts and Today's Sessions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SystemAlerts selectedWeek={selectedWeek} />
+          <TodaysSessions sessions={dashboardMetrics.todaySchedules} />
+        </div>
+
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Crianças</CardTitle>
+              <CardTitle className="text-sm font-medium text-blue-800">Total de Crianças</CardTitle>
               <Users className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{children.length}</div>
-              <p className="text-xs text-muted-foreground">Pacientes cadastrados</p>
+              <div className="text-2xl font-bold text-blue-700">{children.length}</div>
+              <p className="text-xs text-blue-600">Pacientes cadastrados</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Terapeutas</CardTitle>
+              <CardTitle className="text-sm font-medium text-green-800">Terapeutas Ativos</CardTitle>
               <UserPlus className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{therapists.length}</div>
-              <p className="text-xs text-muted-foreground">Profissionais ativos</p>
+              <div className="text-2xl font-bold text-green-700">{therapists.length}</div>
+              <p className="text-xs text-green-600">Profissionais na equipe</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sessões Hoje</CardTitle>
+              <CardTitle className="text-sm font-medium text-purple-800">Sessões Hoje</CardTitle>
               <Calendar className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{todaySchedules.length}</div>
-              <p className="text-xs text-muted-foreground">Agendamentos para hoje</p>
+              <div className="text-2xl font-bold text-purple-700">{dashboardMetrics.todaySchedules.length}</div>
+              <p className="text-xs text-purple-600">Agendamentos para hoje</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taxa de Conclusão</CardTitle>
-              <CheckCircle className="h-4 w-4 text-emerald-600" />
+              <CardTitle className="text-sm font-medium text-orange-800">Esta Semana</CardTitle>
+              <TrendingUp className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-600">
-                {thisWeekSchedules.length > 0 
-                  ? Math.round((completedSessions / thisWeekSchedules.length) * 100)
-                  : 0}%
-              </div>
-              <p className="text-xs text-muted-foreground">Sessões desta semana</p>
+              <div className="text-2xl font-bold text-orange-700">{dashboardMetrics.weeklyStats.totalScheduled}</div>
+              <p className="text-xs text-orange-600">
+                {dashboardMetrics.weeklyStats.completed} concluídas, {dashboardMetrics.weeklyStats.pending} pendentes
+              </p>
             </CardContent>
           </Card>
         </div>
 
+        {/* Analytics Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sessões de Hoje</CardTitle>
-              <CardDescription>Agendamentos programados para hoje</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {todaySchedules.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">Nenhuma sessão agendada para hoje</p>
-              ) : (
-                <div className="space-y-3">
-                  {todaySchedules.slice(0, 5).map((schedule) => (
-                    <div key={schedule.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{schedule.activity}</p>
-                        <p className="text-sm text-gray-600">
-                          {children.find(c => c.id === schedule.childId)?.name} - {schedule.time}
-                        </p>
-                      </div>
-                      <Badge 
-                        variant={
-                          schedule.status === 'completed' ? 'default' :
-                          schedule.status === 'cancelled' ? 'destructive' : 'secondary'
-                        }
-                      >
-                        {schedule.status === 'completed' ? 'Concluída' :
-                         schedule.status === 'cancelled' ? 'Cancelada' : 'Agendada'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Resumo da Semana</CardTitle>
-              <CardDescription>Estatísticas das sessões desta semana</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <span>Sessões Concluídas</span>
-                  </div>
-                  <span className="font-bold text-green-600">{completedSessions}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-5 w-5 text-yellow-600" />
-                    <span>Sessões Agendadas</span>
-                  </div>
-                  <span className="font-bold text-yellow-600">
-                    {thisWeekSchedules.filter(s => s.status === 'scheduled').length}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <AlertCircle className="h-5 w-5 text-red-600" />
-                    <span>Sessões Canceladas</span>
-                  </div>
-                  <span className="font-bold text-red-600">{cancelledSessions}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <SpecialtyDistribution selectedWeek={selectedWeek} />
+          <WeeklyComparison selectedWeek={selectedWeek} />
         </div>
+
+        {/* Management Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <TherapistRanking selectedWeek={selectedWeek} />
+          </div>
+          <QuickActions />
+        </div>
+
+        {/* Planning Section */}
+        <PlanningPendencies selectedWeek={selectedWeek} />
       </div>
     );
   }
 
-  // Therapist Dashboard with Weekly View  
+  // Therapist Dashboard - Keep existing functionality
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
