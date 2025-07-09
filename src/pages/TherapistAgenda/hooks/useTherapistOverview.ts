@@ -24,6 +24,7 @@ export const useTherapistOverview = (selectedWeek: Date, filters: TherapistFilte
       const adjustedMinutes = Math.max(0, totalMinutes - BREAK_TIME_MINUTES);
       const currentWeekHours = Math.round((adjustedMinutes / 60) * 10) / 10;
       const maxWeeklyHours = therapist.weeklyWorkloadHours;
+      const availableHours = Math.max(0, maxWeeklyHours - currentWeekHours);
       const utilizationPercentage = Math.round((currentWeekHours / maxWeeklyHours) * 100);
 
       // Determine status
@@ -41,11 +42,17 @@ export const useTherapistOverview = (selectedWeek: Date, filters: TherapistFilte
         isToday(schedule.date)
       );
 
-      // Next session info
+      // Upcoming sessions
       const upcomingSchedules = weekSchedules
         .filter(schedule => schedule.date >= new Date())
         .sort((a, b) => a.date.getTime() - b.date.getTime() || a.time.localeCompare(b.time));
       
+      const upcomingSessions = upcomingSchedules.slice(0, 3).map(schedule => ({
+        time: schedule.time,
+        childName: getChildById(schedule.childId)?.name || 'Desconhecido',
+        activity: schedule.activity
+      }));
+
       const nextSession = upcomingSchedules[0] ? {
         time: upcomingSchedules[0].time,
         childName: getChildById(upcomingSchedules[0].childId)?.name || 'Desconhecido',
@@ -56,10 +63,12 @@ export const useTherapistOverview = (selectedWeek: Date, filters: TherapistFilte
         therapist,
         currentWeekHours,
         maxWeeklyHours,
+        availableHours,
         utilizationPercentage,
         status,
         todaySessionsCount: todaySchedules.length,
         weekSessionsCount: weekSchedules.length,
+        upcomingSessions,
         nextSession
       } as TherapistOverviewCard;
     });

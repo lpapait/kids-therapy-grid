@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
 import { useTherapistAgendaContext } from '../../context/TherapistAgendaContext';
 import { format, addDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const QuickScheduleModal: React.FC = () => {
   const { state, dispatch } = useTherapistAgendaContext();
@@ -106,7 +107,7 @@ const QuickScheduleModal: React.FC = () => {
                 <SelectContent>
                   {nextSevenDays.map((date) => (
                     <SelectItem key={date.toISOString()} value={format(date, 'yyyy-MM-dd')}>
-                      {format(date, 'dd/MM (eee)', { locale: { localize: { day: () => '' } } })}
+                      {format(date, 'dd/MM (eee)', { locale: ptBR })}
                     </SelectItem>
                   ))}
                 </SelectContent>

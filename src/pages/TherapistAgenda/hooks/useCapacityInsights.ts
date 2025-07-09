@@ -17,6 +17,7 @@ export const useCapacityInsights = (selectedWeek: Date) => {
         type: 'critical',
         title: 'Capacidade Crítica',
         description: `${capacityMetrics.overloadedTherapists} terapeutas sobrecarregados. Redistribuição urgente necessária.`,
+        priority: 1,
         action: {
           label: 'Redistribuir Sessões',
           onClick: () => console.log('Redistribute sessions')
@@ -30,6 +31,7 @@ export const useCapacityInsights = (selectedWeek: Date) => {
         type: 'warning',
         title: 'Monitoramento Necessário',
         description: `${capacityMetrics.nearLimitTherapists} terapeutas próximos ao limite de capacidade.`,
+        priority: 2,
         action: {
           label: 'Ver Detalhes',
           onClick: () => console.log('View capacity details')
@@ -38,11 +40,12 @@ export const useCapacityInsights = (selectedWeek: Date) => {
     }
 
     // Individual therapist alerts
-    therapistAlerts.slice(0, 3).forEach(alert => {
+    therapistAlerts.slice(0, 3).forEach((alert, index) => {
       results.push({
         type: alert.status === 'critical' ? 'critical' : 'warning',
         title: `${alert.therapistName}`,
         description: `${alert.percentage}% da capacidade utilizada (${alert.hoursScheduled}h/${alert.maxHours}h)`,
+        priority: alert.status === 'critical' ? 1 : 2,
         action: {
           label: 'Ver Agenda',
           onClick: () => console.log(`View agenda for ${alert.therapistId}`)
@@ -56,10 +59,11 @@ export const useCapacityInsights = (selectedWeek: Date) => {
         type: 'success',
         title: 'Capacidade Otimizada',
         description: `Equipe operando em níveis ideais. ${capacityMetrics.availableHours}h disponíveis para novos agendamentos.`,
+        priority: 3
       });
     }
 
-    return results;
+    return results.sort((a, b) => a.priority - b.priority);
   }, [capacityMetrics, therapistAlerts]);
 
   return {
