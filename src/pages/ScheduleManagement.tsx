@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import WeekSelector from '@/components/WeekSelector';
 import ScheduleGridSkeleton from '@/components/ScheduleManagement/ScheduleGridSkeleton';
 import SessionEditModal from '@/components/SessionEditModal';
@@ -6,14 +6,15 @@ import ScheduleHeader from '@/components/ScheduleManagement/ScheduleHeader';
 import ChildSelector from '@/components/ScheduleManagement/ChildSelector';
 import ScheduleSidebar from '@/components/ScheduleManagement/ScheduleSidebar';
 import ScheduleGrid from '@/components/ScheduleManagement/ScheduleGrid';
+import ScheduleErrorBoundary from '@/components/ScheduleManagement/ScheduleErrorBoundary';
 import LazyPanel from '@/components/LazyPanel';
+import LoadingState from '@/components/ui/loading-state';
 import { useData } from '@/contexts/DataContext';
-import { Child, Schedule } from '@/types';
+import { useScheduleState } from '@/hooks/useScheduleState';
 import { useTherapyCoverage } from '@/hooks/useTherapyCoverage';
 import { useOptimizedWorkload } from '@/hooks/useOptimizedWorkload';
 import { useDebounce, useDebouncedCallback } from '@/hooks/useDebounce';
 import { useWeekDuplication } from '@/hooks/useWeekDuplication';
-import { useToast } from '@/hooks/use-toast';
 
 const ScheduleManagement = () => {
   const { children, getTherapistById, schedules } = useData();
