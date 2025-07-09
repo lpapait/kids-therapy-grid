@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { isSameWeek, format, startOfWeek, addDays } from 'date-fns';
@@ -16,6 +15,7 @@ interface TherapistScheduleOverview {
   weeklyGrid: WeeklySlot[][];
   availableSlots: number;
   sessionsCount: number;
+  administrativeHours?: number;
 }
 
 interface WeeklySlot {
@@ -74,7 +74,11 @@ export const useTeamScheduleOverview = (
         schedule.status !== 'cancelled'
       );
 
-      // Calculate workload
+      // Separar sessões normais e administrativas
+      const regularSessions = weekSchedules.filter(s => s.type !== 'administrative');
+      const administrativeSessions = weekSchedules.filter(s => s.type === 'administrative');
+
+      // Calculate total workload including administrative time
       const totalMinutesScheduled = weekSchedules.reduce((total, schedule) => {
         const sessionDuration = schedule.duration || 60;
         return total + sessionDuration + BREAK_TIME_MINUTES;
@@ -108,23 +112,38 @@ export const useTeamScheduleOverview = (
           );
           
           if (daySchedule) {
-            const child = children.find(c => c.id === daySchedule.childId);
-            const specialty = therapist.specialties.find(s => 
-              daySchedule.activity.toLowerCase().includes(s.toLowerCase())
-            ) || therapist.specialties[0];
-            
-            daySlots.push({
-              date: currentDate,
-              time: timeSlot,
-              session: {
-                id: daySchedule.id,
-                childName: child?.name || 'Paciente',
-                activity: daySchedule.activity,
-                specialty,
-                status: daySchedule.status as any
-              },
-              isEmpty: false
-            });
+            if (daySchedule.type === 'administrative') {
+              daySlots.push({
+                date: currentDate,
+                time: timeSlot,
+                session: {
+                  id: daySchedule.id,
+                  childName: 'Tempo Administrativo',
+                  activity: daySchedule.activity || 'Atividades Administrativas',
+                  specialty: 'Administrativo',
+                  status: daySchedule.status as any
+                },
+                isEmpty: false
+              });
+            } else {
+              const child = children.find(c => c.id === daySchedule.childId);
+              const specialty = therapist.specialties.find(s => 
+                daySchedule.activity.toLowerCase().includes(s.toLowerCase())
+              ) || therapist.specialties[0];
+              
+              daySlots.push({
+                date: currentDate,
+                time: timeSlot,
+                session: {
+                  id: daySchedule.id,
+                  childName: child?.name || 'Paciente',
+                  activity: daySchedule.activity,
+                  specialty,
+                  status: daySchedule.status as any
+                },
+                isEmpty: false
+              });
+            }
           } else {
             daySlots.push({
               date: currentDate,
@@ -150,7 +169,8 @@ export const useTeamScheduleOverview = (
         status,
         weeklyGrid,
         availableSlots,
-        sessionsCount: weekSchedules.length
+        sessionsCount: regularSessions.length,
+        administrativeHours: Math.round((administrativeSessions.reduce((total, s) => total + (s.duration || 60), 0) / 60) * 10) / 10
       };
     });
   }, [filteredTherapists, schedules, children, selectedWeek]);

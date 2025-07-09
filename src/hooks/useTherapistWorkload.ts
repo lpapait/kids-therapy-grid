@@ -21,10 +21,13 @@ export const useTherapistWorkload = (therapistId: string | null, selectedWeek: D
       schedule.status !== 'cancelled'
     );
 
-    // Calculate total hours scheduled including break time
+    // Separar sessões administrativas das regulares
+    const regularSessions = weekSchedules.filter(s => s.type !== 'administrative');
+    const administrativeSessions = weekSchedules.filter(s => s.type === 'administrative');
+
+    // Calculate total hours scheduled including break time and administrative time
     const totalMinutesScheduled = weekSchedules.reduce((total, schedule) => {
       const sessionDuration = schedule.duration || 60;
-      // Add break time after each session (except the last one of the day)
       const breakTime = BREAK_TIME_MINUTES;
       return total + sessionDuration + breakTime;
     }, 0);
@@ -52,6 +55,14 @@ export const useTherapistWorkload = (therapistId: string | null, selectedWeek: D
     if (status === 'available' && remainingHours > 2) {
       suggestedActions.push('Pode agendar mais sessões');
       suggestedActions.push(`${remainingHours.toFixed(1)}h disponíveis (incluindo intervalos)`);
+      
+      // Sugerir blocos administrativos se necessário
+      const adminHours = Math.round((administrativeSessions.reduce((total, s) => total + (s.duration || 60), 0) / 60) * 10) / 10;
+      const recommendedAdminHours = therapist.weeklyAdministrativeHours || 4;
+      
+      if (adminHours < recommendedAdminHours) {
+        suggestedActions.push(`Considere reservar ${(recommendedAdminHours - adminHours).toFixed(1)}h para atividades administrativas`);
+      }
     } else if (status === 'near_limit') {
       suggestedActions.push('Considere sessões mais curtas');
       suggestedActions.push('Planeje com cuidado - próximo do limite');

@@ -62,6 +62,7 @@ export interface Therapist {
   workSchedule?: WorkSchedule;
   color: string;
   weeklyWorkloadHours: number;
+  weeklyAdministrativeHours?: number;
   createdAt: Date;
 }
 
@@ -92,19 +93,19 @@ export interface ScheduleTemplate {
 
 export interface Schedule {
   id: string;
-  childId: string;
+  childId?: string; // Agora opcional para permitir sessões administrativas
   therapistId: string;
   date: Date;
   time: string;
   activity: string;
   duration: number; // Duration in minutes
   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
+  type?: 'session' | 'administrative'; // Novo campo para distinguir tipos
   observations?: string;
   createdAt: Date;
   updatedAt: Date;
   updatedBy: string;
 }
-
 
 export interface TherapyCoverage {
   specialty: string;

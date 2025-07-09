@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Clock, User, Activity } from 'lucide-react';
+import { Clock, User, Activity, FileText } from 'lucide-react';
 import { getTherapistColorStyles } from '@/lib/therapistColors';
 import { Schedule, Therapist, Child } from '@/types';
 import { AgendaStats } from '../../../types/agenda.types';
@@ -34,8 +33,14 @@ const GridCell: React.FC<GridCellProps> = ({
   onViewChild,
   onMarkCompleted
 }) => {
-  const child = schedule ? getChildById(schedule.childId) : null;
-  const colorStyles = schedule ? getTherapistColorStyles(therapist.color, true) : {};
+  const child = schedule?.childId ? getChildById(schedule.childId) : null;
+  const isAdministrative = schedule?.type === 'administrative';
+  
+  const colorStyles = schedule ? (
+    isAdministrative ? 
+      { backgroundColor: '#f8fafc', borderColor: '#cbd5e1' } : 
+      getTherapistColorStyles(therapist.color, true)
+  ) : {};
 
   const getStatusColor = (status: Schedule['status']) => {
     switch (status) {
@@ -68,50 +73,82 @@ const GridCell: React.FC<GridCellProps> = ({
       className="border-b border-r p-2 min-h-[100px] transition-colors group relative"
       style={schedule ? colorStyles : {}}
     >
-      {schedule && child ? (
-        <SessionTooltip schedule={schedule} child={child}>
-          <div className="h-full cursor-pointer">
+      {schedule ? (
+        isAdministrative ? (
+          <div className="h-full">
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <Badge 
                   variant="secondary" 
-                  className={`text-xs ${getStatusColor(schedule.status)} mb-1`}
+                  className="text-xs bg-slate-100 text-slate-800 border-slate-200 mb-1"
                 >
-                  {getStatusIcon(schedule.status)}
+                  <FileText className="h-3 w-3 mr-1" />
+                  Administrativo
                 </Badge>
-                <SessionActions
-                  schedule={schedule}
-                  child={child}
-                  onEdit={onEditSession}
-                  onDelete={onDeleteSession}
-                  onViewChild={onViewChild}
-                  onMarkCompleted={onMarkCompleted}
-                />
               </div>
               <div className="text-sm space-y-1">
-                <div className="font-medium text-gray-900 flex items-center">
-                  <div 
-                    className="w-3 h-3 rounded-full mr-1 border" 
-                    style={{ backgroundColor: therapist.color }}
-                  />
-                  {child.name}
+                <div className="font-medium text-slate-700 flex items-center">
+                  <FileText className="h-3 w-3 mr-1" />
+                  Tempo Administrativo
                 </div>
-                <div className="flex items-center text-blue-600 text-xs">
+                <div className="flex items-center text-slate-600 text-xs">
                   <Activity className="h-3 w-3 mr-1" />
-                  {schedule.activity}
+                  {schedule.activity || 'Atividades Administrativas'}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-slate-500">
                   {schedule.duration} min
                 </div>
-                {schedule.observations && (
-                  <div className="text-xs text-gray-500 line-clamp-2">
-                    {schedule.observations}
-                  </div>
-                )}
+                <div className="text-xs text-slate-500 bg-slate-50 p-1 rounded mt-2">
+                  Relatórios e registros
+                </div>
               </div>
             </div>
           </div>
-        </SessionTooltip>
+        ) : (
+          <SessionTooltip schedule={schedule} child={child}>
+            <div className="h-full cursor-pointer">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Badge 
+                    variant="secondary" 
+                    className={`text-xs ${getStatusColor(schedule.status)} mb-1`}
+                  >
+                    {getStatusIcon(schedule.status)}
+                  </Badge>
+                  <SessionActions
+                    schedule={schedule}
+                    child={child}
+                    onEdit={onEditSession}
+                    onDelete={onDeleteSession}
+                    onViewChild={onViewChild}
+                    onMarkCompleted={onMarkCompleted}
+                  />
+                </div>
+                <div className="text-sm space-y-1">
+                  <div className="font-medium text-gray-900 flex items-center">
+                    <div 
+                      className="w-3 h-3 rounded-full mr-1 border" 
+                      style={{ backgroundColor: therapist.color }}
+                    />
+                    {child?.name || 'Paciente'}
+                  </div>
+                  <div className="flex items-center text-blue-600 text-xs">
+                    <Activity className="h-3 w-3 mr-1" />
+                    {schedule.activity}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {schedule.duration} min
+                  </div>
+                  {schedule.observations && (
+                    <div className="text-xs text-gray-500 line-clamp-2">
+                      {schedule.observations}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </SessionTooltip>
+        )
       ) : (
         <div className="h-full flex items-center justify-center">
           <SlotSuggestionPopover

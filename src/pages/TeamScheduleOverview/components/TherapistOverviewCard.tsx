@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Clock, User, Calendar, CheckCircle, AlertTriangle, XCircle, Circle } from 'lucide-react';
+import { Clock, User, Calendar, CheckCircle, AlertTriangle, XCircle, Circle, FileText } from 'lucide-react';
 
 interface TherapistOverviewCardProps {
   therapist: {
@@ -65,6 +64,20 @@ const TherapistOverviewCard: React.FC<TherapistOverviewCardProps> = ({
     }
   };
 
+  const getSessionBackgroundColor = (session: any) => {
+    if (session?.specialty === 'Administrativo') {
+      return 'bg-slate-100 border-slate-300';
+    }
+    return `${therapist.color}15`;
+  };
+
+  const getSessionBorderColor = (session: any) => {
+    if (session?.specialty === 'Administrativo') {
+      return 'border-slate-300';
+    }
+    return `${therapist.color}40`;
+  };
+
   const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
   const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
 
@@ -106,6 +119,20 @@ const TherapistOverviewCard: React.FC<TherapistOverviewCardProps> = ({
               {therapist.hoursScheduled}h / {therapist.maxHours}h
             </span>
           </div>
+          
+          {/* Detalhamento da carga horária */}
+          {therapist.administrativeHours && therapist.administrativeHours > 0 && (
+            <div className="text-xs text-gray-500 space-y-1">
+              <div className="flex justify-between">
+                <span>• Sessões:</span>
+                <span>{(therapist.hoursScheduled - therapist.administrativeHours).toFixed(1)}h</span>
+              </div>
+              <div className="flex justify-between">
+                <span>• Administrativo:</span>
+                <span>{therapist.administrativeHours}h</span>
+              </div>
+            </div>
+          )}
           
           <div className="relative">
             <Progress value={therapist.percentage} className="h-2" />
@@ -161,20 +188,25 @@ const TherapistOverviewCard: React.FC<TherapistOverviewCardProps> = ({
                       );
                     }
 
+                    const isAdministrative = slot.session?.specialty === 'Administrativo';
+
                     return (
                       <Popover key={`${dayIndex}-${timeIndex}`}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="ghost"
-                            className="h-8 p-1 border text-xs hover:shadow-sm"
-                            style={{ 
-                              backgroundColor: `${therapist.color}15`,
-                              borderColor: `${therapist.color}40`
-                            }}
+                            className={`h-8 p-1 border text-xs hover:shadow-sm ${getSessionBackgroundColor(slot.session)} ${getSessionBorderColor(slot.session)}`}
                           >
                             <div className="flex flex-col items-center justify-center min-w-0 w-full">
                               <div className="truncate max-w-full text-[10px] leading-tight">
-                                {slot.session?.childName}
+                                {isAdministrative ? (
+                                  <div className="flex items-center gap-1">
+                                    <FileText className="h-2 w-2" />
+                                    <span>Admin</span>
+                                  </div>
+                                ) : (
+                                  slot.session?.childName
+                                )}
                               </div>
                               <div className="flex items-center gap-1 mt-0.5">
                                 {getSessionStatusIcon(slot.session?.status || 'scheduled')}
@@ -186,7 +218,16 @@ const TherapistOverviewCard: React.FC<TherapistOverviewCardProps> = ({
                         <PopoverContent className="w-64 p-3">
                           <div className="space-y-2">
                             <div className="flex justify-between items-start">
-                              <h4 className="font-medium text-sm">{slot.session?.childName}</h4>
+                              <h4 className="font-medium text-sm flex items-center gap-2">
+                                {isAdministrative ? (
+                                  <>
+                                    <FileText className="h-4 w-4 text-slate-600" />
+                                    Tempo Administrativo
+                                  </>
+                                ) : (
+                                  slot.session?.childName
+                                )}
+                              </h4>
                               {getSessionStatusIcon(slot.session?.status || 'scheduled')}
                             </div>
                             
@@ -203,6 +244,12 @@ const TherapistOverviewCard: React.FC<TherapistOverviewCardProps> = ({
                                 <Calendar className="h-3 w-3" />
                                 {slot.session?.activity}
                               </div>
+                              {isAdministrative && (
+                                <div className="text-xs text-slate-500 mt-2 p-2 bg-slate-50 rounded">
+                                  Reservado para atividades administrativas: 
+                                  preenchimento de sistema ou relatórios
+                                </div>
+                              )}
                             </div>
                             
                             <div className="pt-2 border-t">
