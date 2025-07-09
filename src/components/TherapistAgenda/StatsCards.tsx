@@ -8,7 +8,12 @@ import { Therapist, Schedule, Child } from '@/types';
 interface StatsCardsProps {
   stats: {
     totalScheduled: number;
+    confirmedSessions: number;
+    pendingSessions: number;
+    cancelledSessions: number;
+    completedSessions: number;
     totalHours: number;
+    maxHours: number;
     utilizationPercentage: number;
   };
   therapist: Therapist;
@@ -66,7 +71,13 @@ const StatsCards: React.FC<StatsCardsProps> = ({
             schedules={schedules}
             selectedWeek={selectedWeek}
             getChildById={getChildById}
-            stats={stats}
+            stats={{
+              totalHours: stats.totalHours,
+              totalScheduled: stats.totalScheduled,
+              confirmedSessions: stats.confirmedSessions,
+              pendingSessions: stats.pendingSessions,
+              cancelledSessions: stats.cancelledSessions
+            }}
           />
         </CardContent>
       </Card>
