@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Child, TherapyCoverage } from '@/types';
-import { Activity, Clock, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { Activity, Clock, CheckCircle, AlertTriangle, XCircle, Filter } from 'lucide-react';
 import { ScheduleSuggestionButton } from '@/components/ScheduleSuggestion';
 
 interface TherapyCoveragePanelProps {
@@ -20,6 +21,26 @@ const TherapyCoveragePanel: React.FC<TherapyCoveragePanelProps> = ({
   selectedWeek = new Date(),
   onScheduleCreated = () => {}
 }) => {
+  const [showOnlyPending, setShowOnlyPending] = useState(false);
+
+  // Filter therapies based on checkbox state
+  const filteredCoverageData = useMemo(() => {
+    const safeCoverageData = Array.isArray(coverageData) ? coverageData : [];
+    if (!showOnlyPending) return safeCoverageData;
+    
+    return safeCoverageData.filter(therapy => 
+      therapy.status === 'partial' || therapy.status === 'missing'
+    );
+  }, [coverageData, showOnlyPending]);
+
+  // Count pending therapies
+  const pendingCount = useMemo(() => {
+    const safeCoverageData = Array.isArray(coverageData) ? coverageData : [];
+    return safeCoverageData.filter(therapy => 
+      therapy.status === 'partial' || therapy.status === 'missing'
+    ).length;
+  }, [coverageData]);
+
   // Validação de segurança para child
   if (!child) {
     return (
@@ -42,9 +63,6 @@ const TherapyCoveragePanel: React.FC<TherapyCoveragePanelProps> = ({
       </Card>
     );
   }
-
-  // Validação de segurança para coverageData
-  const safeCoverageData = Array.isArray(coverageData) ? coverageData : [];
 
   const getStatusIcon = (status: TherapyCoverage['status']) => {
     switch (status) {
@@ -82,15 +100,43 @@ const TherapyCoveragePanel: React.FC<TherapyCoveragePanelProps> = ({
         <CardDescription>
           Acompanhamento das horas semanais de {child.name}
         </CardDescription>
+        
+        {/* Filtro de terapias pendentes */}
+        {coverageData.length > 0 && (
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id="show-pending-only"
+              checked={showOnlyPending}
+              onCheckedChange={setShowOnlyPending}
+            />
+            <label 
+              htmlFor="show-pending-only" 
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center space-x-1"
+            >
+              <Filter className="h-3 w-3" />
+              <span>Mostrar apenas terapias pendentes</span>
+              {pendingCount > 0 && (
+                <Badge variant="secondary" className="ml-2 text-xs">
+                  {pendingCount} pendentes
+                </Badge>
+              )}
+            </label>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
-        {safeCoverageData.length === 0 ? (
+        {filteredCoverageData.length === 0 ? (
           <div className="text-center py-6 text-gray-500">
             <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-            <p>Nenhuma terapia configurada</p>
+            <p>
+              {showOnlyPending && coverageData.length > 0 
+                ? 'Todas as terapias estão completas' 
+                : 'Nenhuma terapia configurada'
+              }
+            </p>
           </div>
         ) : (
-          safeCoverageData.map((therapy) => (
+          filteredCoverageData.map((therapy) => (
             <div key={therapy.specialty} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -136,18 +182,18 @@ const TherapyCoveragePanel: React.FC<TherapyCoveragePanelProps> = ({
           ))
         )}
         
-        {safeCoverageData.length > 0 && (
+        {coverageData.length > 0 && (
           <div className="pt-4 border-t">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Total configurado:</span>
               <span className="font-medium">
-                {safeCoverageData.reduce((sum, t) => sum + (t.hoursRequired || 0), 0)}h semanais
+                {coverageData.reduce((sum, t) => sum + (t.hoursRequired || 0), 0)}h semanais
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Total agendado:</span>
               <span className="font-medium">
-                {safeCoverageData.reduce((sum, t) => sum + (t.hoursScheduled || 0), 0)}h semanais
+                {coverageData.reduce((sum, t) => sum + (t.hoursScheduled || 0), 0)}h semanais
               </span>
             </div>
           </div>

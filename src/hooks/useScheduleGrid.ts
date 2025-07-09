@@ -3,6 +3,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { Schedule, Child } from '@/types';
 import { format, isSameDay } from 'date-fns';
+import { useDragFeedback, MoveImpact } from '@/hooks/useDragFeedback';
+import { useToast } from '@/hooks/use-toast';
 
 export interface GridConfig {
   timeSlotDuration: number; // in minutes
@@ -13,6 +15,8 @@ export interface GridConfig {
 
 export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null) => {
   const { schedules, addSchedule, updateSchedule } = useData();
+  const { calculateMoveImpact } = useDragFeedback();
+  const { toast } = useToast();
   
   const [gridConfig, setGridConfig] = useState<GridConfig>({
     timeSlotDuration: 60,
@@ -23,6 +27,8 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
 
   const [draggedSession, setDraggedSession] = useState<Schedule | null>(null);
   const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
+  const [dragFeedback, setDragFeedback] = useState<MoveImpact | null>(null);
+  const [dragPosition, setDragPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Generate time slots based on configuration
   const timeSlots = useMemo(() => {
@@ -65,9 +71,51 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
     setDraggedSession(session);
   }, []);
 
+  // Handle drag over with feedback calculation
+  const handleDragOver = useCallback((date: Date, time: string, e: React.DragEvent) => {
+    e.preventDefault();
+    
+    if (!draggedSession || !selectedChild) return;
+    
+    // Calculate impact of moving to this slot
+    const impact = calculateMoveImpact(draggedSession, date, time, selectedChild, selectedWeek);
+    setDragFeedback(impact);
+    setDragPosition({ x: e.clientX, y: e.clientY });
+  }, [draggedSession, selectedChild, selectedWeek, calculateMoveImpact]);
+
   // Handle drop
   const handleDrop = useCallback((date: Date, time: string) => {
-    if (!draggedSession) return;
+    if (!draggedSession || !selectedChild) return;
+    
+    // Get final impact calculation
+    const impact = calculateMoveImpact(draggedSession, date, time, selectedChild, selectedWeek);
+    
+    // Show error if there are conflicts
+    if (impact.severity === 'error') {
+      toast({
+        title: "Erro ao mover sessão",
+        description: impact.message,
+        variant: "destructive"
+      });
+      setDraggedSession(null);
+      setDragFeedback(null);
+      return;
+    }
+    
+    // Show warning but allow the move
+    if (impact.severity === 'warning') {
+      toast({
+        title: "Atenção",
+        description: impact.message,
+        variant: "default"
+      });
+    } else {
+      toast({
+        title: "Sessão movida com sucesso",
+        description: impact.message,
+        variant: "default"
+      });
+    }
     
     updateSchedule(draggedSession.id, {
       date,
@@ -76,7 +124,8 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
     });
     
     setDraggedSession(null);
-  }, [draggedSession, updateSchedule]);
+    setDragFeedback(null);
+  }, [draggedSession, selectedChild, selectedWeek, calculateMoveImpact, updateSchedule, toast]);
 
   // Handle session selection
   const toggleSessionSelection = useCallback((sessionId: string) => {
@@ -119,7 +168,10 @@ export const useScheduleGrid = (selectedWeek: Date, selectedChild: Child | null)
     weekSchedules,
     draggedSession,
     selectedSessions,
+    dragFeedback,
+    dragPosition,
     handleDragStart,
+    handleDragOver,
     handleDrop,
     toggleSessionSelection,
     bulkCancel,

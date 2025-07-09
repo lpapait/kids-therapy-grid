@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import EnhancedGridCell from './EnhancedGridCell';
 import GridConfigPanel from './GridConfigPanel';
 import BulkOperationsPanel from './BulkOperationsPanel';
+import DragFeedbackTooltip from '@/components/DragFeedbackTooltip';
 
 interface ScheduleGridProps {
   selectedWeek: Date;
@@ -32,14 +33,15 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     weekSchedules,
     draggedSession,
     selectedSessions,
+    dragFeedback,
+    dragPosition,
     handleDragStart,
+    handleDragOver,
     handleDrop,
     toggleSessionSelection,
     bulkCancel,
     bulkReschedule
   } = useScheduleGrid(selectedWeek, selectedChild);
-
-  
 
   // Validação de segurança
   if (!selectedChild) {
@@ -80,8 +82,8 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     ) || null;
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
+  const handleCellDragOver = (date: Date, time: string) => (e: React.DragEvent) => {
+    handleDragOver(date, time, e);
   };
 
   const handleCellDrop = (date: Date, time: string) => (e: React.DragEvent) => {
@@ -151,6 +153,7 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                     {weekDays.map((day) => {
                       const schedule = getScheduleForSlot(day, time);
                       const therapist = schedule ? getTherapistById(schedule.therapistId) : null;
+                      const isDragOverTarget = draggedSession && format(day, 'yyyy-MM-dd') + time === format(day, 'yyyy-MM-dd') + time;
                       
                       return (
                         <EnhancedGridCell
@@ -160,12 +163,12 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                           schedule={schedule || undefined}
                           therapist={therapist || undefined}
                           isSelected={schedule ? selectedSessions.includes(schedule.id) : false}
-                          isDragOver={false}
+                          isDragOver={isDragOverTarget}
                           selectedChild={selectedChild}
                           selectedWeek={selectedWeek}
                           onScheduleClick={onScheduleClick}
                           onDragStart={handleDragStart}
-                          onDragOver={handleDragOver}
+                          onDragOver={handleCellDragOver(day, time)}
                           onDrop={handleCellDrop(day, time)}
                           onSelectToggle={toggleSessionSelection}
                           onSelectTherapist={(therapist) => {
@@ -196,6 +199,13 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Drag Feedback Tooltip */}
+      <DragFeedbackTooltip
+        impact={dragFeedback}
+        position={dragPosition}
+        visible={!!draggedSession && !!dragFeedback}
+      />
     </div>
   );
 };
