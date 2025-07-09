@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Users, UserPlus, TrendingUp } from 'lucide-react';
-import TherapistWeeklyView from './TherapistWeeklyView';
+import WeeklyView from '@/features/therapist-agenda/components/WeeklyView';
 import WeekSelector from './WeekSelector';
 
 // New dashboard components
@@ -135,7 +136,7 @@ const Dashboard = () => {
       </div>
 
       {user?.id && (
-        <TherapistWeeklyView 
+        <WeeklyView 
           therapistId={user.id} 
           showWeekSelector={true}
         />
