@@ -45,6 +45,11 @@ const UnifiedGridCell: React.FC<UnifiedGridCellProps> = ({
     onScheduleClick(date, time, schedule || undefined, e);
   };
 
+  const handleEmptySlotScheduleClick = (slotDate: Date, slotTime: string) => {
+    console.log('Empty slot schedule click:', { slotDate, slotTime });
+    onScheduleClick(slotDate, slotTime, undefined);
+  };
+
   const handleDragStart = (e: React.DragEvent) => {
     if (schedule) {
       onDragStart(schedule);
@@ -72,7 +77,7 @@ const UnifiedGridCell: React.FC<UnifiedGridCellProps> = ({
         height: cellHeight,
         ...(schedule ? colorStyles : {})
       }}
-      onClick={handleClick}
+      onClick={schedule ? handleClick : undefined}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
@@ -90,6 +95,7 @@ const UnifiedGridCell: React.FC<UnifiedGridCellProps> = ({
           selectedChild={mode === 'child' ? (targetEntity as Child) : null}
           date={date}
           time={time}
+          onScheduleClick={handleEmptySlotScheduleClick}
           onSelectTherapist={onSelectTherapist}
         />
       )}

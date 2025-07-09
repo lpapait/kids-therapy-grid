@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Schedule, Child } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 import SessionEditForm from './SessionEditForm';
 import SessionEditHeader from './SessionEditHeader';
@@ -27,6 +28,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
 }) => {
   const { addSchedule, updateSchedule } = useData();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   const [formData, setFormData] = useState({
     activity: schedule?.activity || '',
@@ -36,8 +38,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
     reason: '',
     duration: schedule?.duration || 60
   });
-
-  
 
   useEffect(() => {
     if (schedule) {
@@ -61,31 +61,57 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
     }
   }, [schedule]);
 
-  const handleSubmit = (data: typeof formData) => {
-    if (schedule) {
-      updateSchedule(schedule.id, {
-        activity: data.activity,
-        therapistId: data.therapistId,
-        status: data.status,
-        observations: data.observations,
-        duration: data.duration,
-        updatedBy: user?.id || ''
-      }, data.reason || undefined);
-    } else {
-      addSchedule({
-        childId: child.id,
-        therapistId: data.therapistId,
-        date,
-        time,
-        activity: data.activity,
-        status: data.status,
-        observations: data.observations,
-        duration: data.duration,
-        updatedBy: user?.id || ''
+  const handleSubmit = async (data: typeof formData) => {
+    console.log('SessionEditModal handleSubmit called:', { data, schedule });
+    
+    try {
+      if (schedule) {
+        console.log('Updating existing schedule');
+        await updateSchedule(schedule.id, {
+          activity: data.activity,
+          therapistId: data.therapistId,
+          status: data.status,
+          observations: data.observations,
+          duration: data.duration,
+          updatedBy: user?.id || ''
+        }, data.reason || undefined);
+        
+        toast({
+          title: 'Sessão atualizada',
+          description: 'A sessão foi atualizada com sucesso.',
+          variant: 'default'
+        });
+      } else {
+        console.log('Creating new schedule');
+        await addSchedule({
+          childId: child.id,
+          therapistId: data.therapistId,
+          date,
+          time,
+          activity: data.activity,
+          status: data.status,
+          observations: data.observations,
+          duration: data.duration,
+          updatedBy: user?.id || ''
+        });
+        
+        toast({
+          title: 'Sessão criada',
+          description: 'A nova sessão foi agendada com sucesso.',
+          variant: 'default'
+        });
+      }
+      
+      console.log('Schedule operation completed, closing modal');
+      onClose();
+    } catch (error) {
+      console.error('Error saving schedule:', error);
+      toast({
+        title: 'Erro ao salvar',
+        description: 'Ocorreu um erro ao salvar a sessão. Tente novamente.',
+        variant: 'destructive'
       });
     }
-    
-    onClose();
   };
 
   const handleCancel = (reason: string) => {
@@ -95,37 +121,40 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({
         updatedBy: user.id
       }, reason);
       
+      toast({
+        title: 'Sessão cancelada',
+        description: 'A sessão foi cancelada com sucesso.',
+        variant: 'default'
+      });
+      
       onClose();
     }
   };
 
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              <SessionEditHeader
-                schedule={schedule}
-                child={child}
-              />
-            </DialogTitle>
-          </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            <SessionEditHeader
+              schedule={schedule}
+              child={child}
+            />
+          </DialogTitle>
+        </DialogHeader>
 
-          <SessionEditForm
-            formData={formData}
-            setFormData={setFormData}
-            schedule={schedule}
-            date={date}
-            time={time}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            onClose={onClose}
-          />
-        </DialogContent>
-      </Dialog>
-
-    </>
+        <SessionEditForm
+          formData={formData}
+          setFormData={setFormData}
+          schedule={schedule}
+          date={date}
+          time={time}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          onClose={onClose}
+        />
+      </DialogContent>
+    </Dialog>
   );
 };
 

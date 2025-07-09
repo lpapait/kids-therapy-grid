@@ -22,6 +22,7 @@ export const useScheduleManagement = () => {
 
   // Optimized: Only refresh when schedules actually change
   useEffect(() => {
+    console.log('Schedules updated, refreshing grid. Count:', schedules.length);
     setRefreshKey(prev => prev + 1);
   }, [schedules.length]);
 
@@ -34,6 +35,8 @@ export const useScheduleManagement = () => {
   const selectedTherapist = selectedTherapistId ? getTherapistById(selectedTherapistId) : null;
 
   const handleScheduleClick = (date: Date, time: string, schedule?: Schedule) => {
+    console.log('Schedule click handler called:', { date, time, schedule, selectedChild });
+    
     if (!selectedChild) {
       toast({
         title: 'Selecione uma criança',
@@ -43,6 +46,7 @@ export const useScheduleManagement = () => {
       return;
     }
     
+    console.log('Opening editing session modal');
     setEditingSession({
       date,
       time,
@@ -51,9 +55,12 @@ export const useScheduleManagement = () => {
   };
 
   const handleCloseModal = () => {
+    console.log('Closing modal and forcing refresh');
     setEditingSession(null);
     // Force refresh of the grid to show new/updated schedules
-    setRefreshKey(prev => prev + 1);
+    setTimeout(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 100);
   };
 
   const handleDuplicateWeek = useDebouncedCallback(async () => {
@@ -147,6 +154,7 @@ export const useScheduleManagement = () => {
   }, 200);
 
   const forceRefresh = () => {
+    console.log('Force refresh called');
     setRefreshKey(prev => prev + 1);
   };
 
