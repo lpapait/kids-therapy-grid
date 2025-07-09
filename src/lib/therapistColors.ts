@@ -38,6 +38,11 @@ export const getContrastColor = (backgroundColor: string) => {
   return luminance > 0.5 ? '#000000' : '#FFFFFF';
 };
 
+export const getTherapistColor = (therapistId: string): string => {
+  const index = therapistId.charCodeAt(0) % THERAPIST_COLORS.length;
+  return THERAPIST_COLORS[index];
+};
+
 export const assignTherapistColor = (therapistId: string, existingColors: string[] = []): string => {
   const availableColors = THERAPIST_COLORS.filter(color => !existingColors.includes(color));
   

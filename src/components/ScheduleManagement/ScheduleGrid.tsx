@@ -161,11 +161,31 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                           therapist={therapist || undefined}
                           isSelected={schedule ? selectedSessions.includes(schedule.id) : false}
                           isDragOver={false}
+                          selectedChild={selectedChild}
+                          selectedWeek={selectedWeek}
                           onScheduleClick={onScheduleClick}
                           onDragStart={handleDragStart}
                           onDragOver={handleDragOver}
                           onDrop={handleCellDrop(day, time)}
                           onSelectToggle={toggleSessionSelection}
+                          onSelectTherapist={(therapist) => {
+                            // Criar agendamento temporário com o terapeuta selecionado
+                            const tempSchedule = {
+                              id: '',
+                              childId: selectedChild?.id || '',
+                              therapistId: therapist.id,
+                              date: day,
+                              time: time,
+                              duration: 60,
+                              activity: `Sessão de ${therapist.specialties[0] || 'Terapia'}`,
+                              status: 'scheduled' as const,
+                              observations: '',
+                              createdAt: new Date(),
+                              updatedAt: new Date(),
+                              updatedBy: 'user'
+                            };
+                            onScheduleClick(day, time, tempSchedule);
+                          }}
                         />
                       );
                     })}
