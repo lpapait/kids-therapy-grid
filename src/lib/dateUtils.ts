@@ -1,4 +1,3 @@
-
 import { format, startOfWeek, addDays, isSameDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -40,3 +39,16 @@ export const isSameWeek = (date1: Date, date2: Date) => {
 
 // Export addDays from date-fns for external use
 export { addDays } from 'date-fns';
+
+export const calculateAge = (birthDate: Date): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
