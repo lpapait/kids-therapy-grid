@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { ViewMode, TherapistFilters, QuickScheduleRequest } from '../types/therapist-agenda.types';
 
@@ -18,6 +17,16 @@ interface TherapistAgendaState {
     isOpen: boolean;
     therapistId?: string;
   };
+  calendar: {
+    selectedDate: Date;
+    selectedDay?: Date;
+    showDayView: boolean;
+    calendarFilters: {
+      therapistIds: string[];
+      activityTypes: string[];
+      statusFilter: string[];
+    };
+  };
 }
 
 type TherapistAgendaAction =
@@ -32,7 +41,11 @@ type TherapistAgendaAction =
   | { type: 'CLOSE_QUICK_SCHEDULE' }
   | { type: 'OPEN_AGENDA_PREVIEW'; payload: string }
   | { type: 'CLOSE_AGENDA_PREVIEW' }
-  | { type: 'RESET_FILTERS' };
+  | { type: 'RESET_FILTERS' }
+  | { type: 'SET_CALENDAR_DATE'; payload: Date }
+  | { type: 'SET_SELECTED_DAY'; payload: Date | undefined }
+  | { type: 'TOGGLE_DAY_VIEW'; payload: boolean }
+  | { type: 'UPDATE_CALENDAR_FILTERS'; payload: Partial<TherapistAgendaState['calendar']['calendarFilters']> };
 
 const initialState: TherapistAgendaState = {
   selectedWeek: new Date(),
@@ -51,6 +64,16 @@ const initialState: TherapistAgendaState = {
   },
   agendaPreview: {
     isOpen: false
+  },
+  calendar: {
+    selectedDate: new Date(),
+    selectedDay: undefined,
+    showDayView: false,
+    calendarFilters: {
+      therapistIds: [],
+      activityTypes: [],
+      statusFilter: []
+    }
   }
 };
 
@@ -110,6 +133,42 @@ function therapistAgendaReducer(state: TherapistAgendaState, action: TherapistAg
         ...state,
         filters: initialState.filters,
         selectedTherapists: []
+      };
+    case 'SET_CALENDAR_DATE':
+      return {
+        ...state,
+        calendar: {
+          ...state.calendar,
+          selectedDate: action.payload
+        }
+      };
+    case 'SET_SELECTED_DAY':
+      return {
+        ...state,
+        calendar: {
+          ...state.calendar,
+          selectedDay: action.payload,
+          showDayView: !!action.payload
+        }
+      };
+    case 'TOGGLE_DAY_VIEW':
+      return {
+        ...state,
+        calendar: {
+          ...state.calendar,
+          showDayView: action.payload
+        }
+      };
+    case 'UPDATE_CALENDAR_FILTERS':
+      return {
+        ...state,
+        calendar: {
+          ...state.calendar,
+          calendarFilters: {
+            ...state.calendar.calendarFilters,
+            ...action.payload
+          }
+        }
       };
     default:
       return state;

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useEnhancedReportExport } from '@/hooks/useEnhancedReportExport';
@@ -11,6 +10,7 @@ import SmartFilters from '../SmartFilters';
 import TherapistOverviewGrid from '../TherapistOverviewGrid';
 import TherapistListView from '../TherapistListView';
 import ConsolidatedCapacity from '../ConsolidatedCapacity';
+import CalendarView from '../CalendarView';
 import QuickScheduleModal from '../QuickScheduleModal';
 import AgendaPreviewModal from '../AgendaPreviewModal';
 import AgendaViewer from '@/features/therapist-agenda/components/AgendaViewer';
@@ -121,69 +121,70 @@ const TherapistAgendaContent: React.FC = () => {
         isLoading={state.isLoading}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Filters Sidebar */}
-        <div className="lg:col-span-1 space-y-4">
-          <SmartFilters
-            filters={state.filters}
-            availableSpecialties={availableSpecialties}
-            onUpdateSearchQuery={updateSearchQuery}
-            onToggleSpecialty={toggleSpecialty}
-            onToggleStatus={toggleStatus}
-            onSetAvailabilityFilter={setAvailabilityFilter}
-            onClearAllFilters={clearAllFilters}
-            hasActiveFilters={hasActiveFilters}
-            totalCount={totalTherapists}
-            filteredCount={filteredCount}
-          />
-          
-          {/* Capacity Panel */}
-          <ConsolidatedCapacity
-            insights={insights}
-            capacityMetrics={capacityMetrics}
-            hasAlerts={hasAlerts}
-            onViewDetails={handleViewCapacityDetails}
-            onExportReport={handleExportCapacityReport}
-          />
-        </div>
+      {/* Calendar View */}
+      {state.viewMode === 'calendar' && (
+        <CalendarView />
+      )}
 
-        {/* Main Content */}
-        <div className="lg:col-span-3">
-          {state.viewMode === 'grid' && (
-            <TherapistOverviewGrid
-              cards={therapistCards}
-              isLoading={state.isLoading}
+      {/* Other Views */}
+      {state.viewMode !== 'calendar' && (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Filters Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
+            <SmartFilters
+              filters={state.filters}
+              availableSpecialties={availableSpecialties}
+              onUpdateSearchQuery={updateSearchQuery}
+              onToggleSpecialty={toggleSpecialty}
+              onToggleStatus={toggleStatus}
+              onSetAvailabilityFilter={setAvailabilityFilter}
+              onClearAllFilters={clearAllFilters}
+              hasActiveFilters={hasActiveFilters}
+              totalCount={totalTherapists}
+              filteredCount={filteredCount}
             />
-          )}
-          
-          {state.viewMode === 'list' && (
-            <TherapistListView
-              cards={therapistCards}
-              isLoading={state.isLoading}
+            
+            {/* Capacity Panel */}
+            <ConsolidatedCapacity
+              insights={insights}
+              capacityMetrics={capacityMetrics}
+              hasAlerts={hasAlerts}
+              onViewDetails={handleViewCapacityDetails}
+              onExportReport={handleExportCapacityReport}
             />
-          )}
-          
-          {state.viewMode === 'calendar' && (
-            <div className="bg-white rounded-lg border p-8 text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Vista de Calendário</h3>
-              <p className="text-gray-500">Funcionalidade em desenvolvimento</p>
-            </div>
-          )}
-          
-          {state.viewMode === 'capacity' && (
-            <div className="space-y-6">
-              <ConsolidatedCapacity
-                insights={insights}
-                capacityMetrics={capacityMetrics}
-                hasAlerts={hasAlerts}
-                onViewDetails={handleViewCapacityDetails}
-                onExportReport={handleExportCapacityReport}
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {state.viewMode === 'grid' && (
+              <TherapistOverviewGrid
+                cards={therapistCards}
+                isLoading={state.isLoading}
               />
-              <AgendaViewer />
-            </div>
-          )}
+            )}
+            
+            {state.viewMode === 'list' && (
+              <TherapistListView
+                cards={therapistCards}
+                isLoading={state.isLoading}
+              />
+            )}
+            
+            {state.viewMode === 'capacity' && (
+              <div className="space-y-6">
+                <ConsolidatedCapacity
+                  insights={insights}
+                  capacityMetrics={capacityMetrics}
+                  hasAlerts={hasAlerts}
+                  onViewDetails={handleViewCapacityDetails}
+                  onExportReport={handleExportCapacityReport}
+                />
+                <AgendaViewer />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Modals */}
       <QuickScheduleModal />
