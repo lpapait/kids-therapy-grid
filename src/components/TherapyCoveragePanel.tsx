@@ -41,6 +41,11 @@ const TherapyCoveragePanel: React.FC<TherapyCoveragePanelProps> = ({
     ).length;
   }, [coverageData]);
 
+  // Handle checkbox change with proper type conversion
+  const handleCheckboxChange = (checked: boolean | "indeterminate") => {
+    setShowOnlyPending(checked === true);
+  };
+
   // Validação de segurança para child
   if (!child) {
     return (
@@ -107,7 +112,7 @@ const TherapyCoveragePanel: React.FC<TherapyCoveragePanelProps> = ({
             <Checkbox
               id="show-pending-only"
               checked={showOnlyPending}
-              onCheckedChange={setShowOnlyPending}
+              onCheckedChange={handleCheckboxChange}
             />
             <label 
               htmlFor="show-pending-only" 
