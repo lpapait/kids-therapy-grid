@@ -10,8 +10,11 @@ interface SpecialtyDistributionProps {
 }
 
 const SpecialtyDistribution: React.FC<SpecialtyDistributionProps> = ({ selectedWeek }) => {
-  const coverageData = useTherapyCoverage(selectedWeek);
-  const distributionData = useTherapyDistribution(coverageData, selectedWeek);
+  // useTherapyCoverage expects (child, selectedWeek) but we don't have a specific child here
+  // For dashboard view, we'll need to modify this to work with all children or pass null
+  const coverageData = useTherapyCoverage(null, selectedWeek);
+  // useTherapyDistribution expects only coverageData
+  const distributionData = useTherapyDistribution(coverageData);
 
   const maxSessions = Math.max(...distributionData.map(d => d.value), 1);
 
