@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import WeekSelector from '@/components/WeekSelector';
+import ScheduleGridSkeleton from '@/components/ScheduleManagement/ScheduleGridSkeleton';
 import SessionEditModal from '@/components/SessionEditModal';
 import ScheduleHeader from '@/components/ScheduleManagement/ScheduleHeader';
 import ChildSelector from '@/components/ScheduleManagement/ChildSelector';
@@ -27,10 +28,10 @@ const ScheduleManagement = () => {
     schedule?: Schedule;
   } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isGridLoading, setIsGridLoading] = useState(false);
 
-  // CORRIGIDO: Forçar refresh quando schedules muda
+  // Optimized: Only refresh when schedules actually change
   useEffect(() => {
-    console.log('Schedules updated, forcing refresh. Total schedules:', schedules.length);
     setRefreshKey(prev => prev + 1);
   }, [schedules.length]);
 
@@ -46,8 +47,6 @@ const ScheduleManagement = () => {
   const therapistWorkload = useOptimizedWorkload(selectedTherapistId, debouncedSelectedWeek);
 
   const handleScheduleClick = (date: Date, time: string, schedule?: Schedule) => {
-    console.log('Schedule clicked:', { date, time, schedule });
-    
     if (!selectedChild) {
       toast({
         title: 'Selecione uma criança',
@@ -65,7 +64,6 @@ const ScheduleManagement = () => {
   };
 
   const handleCloseModal = () => {
-    console.log('Modal closed, forcing refresh');
     setEditingSession(null);
     // Force refresh of the grid to show new/updated schedules
     setRefreshKey(prev => prev + 1);
@@ -196,12 +194,16 @@ const ScheduleManagement = () => {
             </LazyPanel>
 
             <LazyPanel className="lg:col-span-3">
-              <ScheduleGrid
-                key={`${refreshKey}-${selectedChild.id}-${debouncedSelectedWeek.getTime()}`}
-                selectedWeek={debouncedSelectedWeek}
-                selectedChild={debouncedSelectedChild}
-                onScheduleClick={handleScheduleClick}
-              />
+              {isGridLoading ? (
+                <ScheduleGridSkeleton />
+              ) : (
+                <ScheduleGrid
+                  key={`${refreshKey}-${selectedChild.id}-${debouncedSelectedWeek.getTime()}`}
+                  selectedWeek={debouncedSelectedWeek}
+                  selectedChild={debouncedSelectedChild}
+                  onScheduleClick={handleScheduleClick}
+                />
+              )}
             </LazyPanel>
           </div>
         </>

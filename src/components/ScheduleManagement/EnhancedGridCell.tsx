@@ -49,10 +49,11 @@ const EnhancedGridCell: React.FC<EnhancedGridCellProps> = ({
   return (
     <div
       className={`
-        border-b border-r p-2 min-h-[60px] cursor-pointer transition-colors
-        ${isDragOver ? 'bg-blue-100' : 'bg-white hover:bg-gray-50'}
+        border-b border-r p-2 min-h-[60px] cursor-pointer transition-all duration-200
+        ${isDragOver ? 'bg-blue-100 scale-105 shadow-md' : 'bg-white hover:bg-gray-50'}
         ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
-        ${schedule ? 'cursor-move' : 'cursor-pointer'}
+        ${schedule ? 'cursor-move hover:shadow-sm' : 'cursor-pointer hover:bg-blue-50'}
+        animate-fade-in
       `}
       onClick={handleClick}
       onDragOver={onDragOver}
@@ -98,8 +99,8 @@ const EnhancedGridCell: React.FC<EnhancedGridCellProps> = ({
       )}
       
       {!schedule && (
-        <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-          +
+        <div className="flex items-center justify-center h-full text-gray-400 text-sm hover:text-blue-500 transition-colors">
+          <span className="text-2xl font-light">+</span>
         </div>
       )}
     </div>

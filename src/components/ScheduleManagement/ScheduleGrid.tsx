@@ -39,7 +39,7 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     bulkReschedule
   } = useScheduleGrid(selectedWeek, selectedChild);
 
-  console.log('ScheduleGrid rendered - weekSchedules:', weekSchedules);
+  
 
   // Validação de segurança
   if (!selectedChild) {
@@ -74,13 +74,10 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   });
 
   const getScheduleForSlot = (date: Date, time: string) => {
-    const schedule = weekSchedules.find(schedule => 
+    return weekSchedules.find(schedule => 
       format(schedule.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
       schedule.time === time
     ) || null;
-    
-    console.log(`Looking for schedule on ${format(date, 'yyyy-MM-dd')} at ${time}:`, schedule);
-    return schedule;
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -101,7 +98,7 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   };
 
   return (
-    <div className="lg:col-span-3 space-y-4">
+    <div className="lg:col-span-3 space-y-4 animate-fade-in">
       <GridConfigPanel
         config={gridConfig}
         onConfigChange={setGridConfig}
@@ -114,65 +111,67 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         onClearSelection={clearSelection}
       />
 
-      <Card>
+      <Card className="hover-scale">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Calendar className="h-5 w-5 text-blue-600" />
             <span>Grade de Agendamentos - {selectedChild.name}</span>
           </CardTitle>
           <CardDescription>
-            Arraste sessões para movê-las. Use Ctrl+Click para seleção múltipla.
+            📱 <strong>Mobile:</strong> Toque para editar • 🖥️ <strong>Desktop:</strong> Arraste para mover, Ctrl+Click para selecionar múltiplos
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="bg-white rounded-lg border overflow-hidden overflow-x-auto">
-            <div className="grid gap-0" style={{ gridTemplateColumns: `120px repeat(${weekDays.length}, 1fr)` }}>
-              {/* Header */}
-              <div className="bg-gray-50 border-b border-r p-3 font-medium text-gray-900 sticky left-0 z-10">
-                Horário
-              </div>
-              {weekDays.map((day) => (
-                <div key={day.toISOString()} className="bg-gray-50 border-b border-r p-3 text-center min-w-[160px]">
-                  <div className="font-medium text-gray-900">
-                    {getDayName(day)}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {format(day, 'dd/MM', { locale: ptBR })}
-                  </div>
+          <div className="bg-white rounded-lg border overflow-hidden">
+            <div className="overflow-x-auto">
+              <div className="grid gap-0 min-w-[800px]" style={{ gridTemplateColumns: `120px repeat(${weekDays.length}, 1fr)` }}>
+                {/* Header */}
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-r p-3 font-medium text-gray-900 sticky left-0 z-10">
+                  Horário
                 </div>
-              ))}
-
-              {/* Time slots - CORRIGIDO: substituindo React.Fragment por div */}
-              {timeSlots.map((time) => (
-                <div key={time} className="contents">
-                  <div className="bg-gray-50 border-b border-r p-3 text-sm font-medium text-gray-900 flex items-center sticky left-0 z-10">
-                    <div className="text-center w-full">
-                      {time}
+                {weekDays.map((day) => (
+                  <div key={day.toISOString()} className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-r p-3 text-center min-w-[160px]">
+                    <div className="font-medium text-gray-900">
+                      {getDayName(day)}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {format(day, 'dd/MM', { locale: ptBR })}
                     </div>
                   </div>
-                  {weekDays.map((day) => {
-                    const schedule = getScheduleForSlot(day, time);
-                    const therapist = schedule ? getTherapistById(schedule.therapistId) : null;
-                    
-                    return (
-                      <EnhancedGridCell
-                        key={`${day.toISOString()}-${time}`}
-                        date={day}
-                        time={time}
-                        schedule={schedule || undefined}
-                        therapist={therapist || undefined}
-                        isSelected={schedule ? selectedSessions.includes(schedule.id) : false}
-                        isDragOver={false}
-                        onScheduleClick={onScheduleClick}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDrop={handleCellDrop(day, time)}
-                        onSelectToggle={toggleSessionSelection}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+                ))}
+
+                {/* Time slots */}
+                {timeSlots.map((time) => (
+                  <div key={time} className="contents">
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-r p-3 text-sm font-medium text-gray-900 flex items-center sticky left-0 z-10">
+                      <div className="text-center w-full">
+                        {time}
+                      </div>
+                    </div>
+                    {weekDays.map((day) => {
+                      const schedule = getScheduleForSlot(day, time);
+                      const therapist = schedule ? getTherapistById(schedule.therapistId) : null;
+                      
+                      return (
+                        <EnhancedGridCell
+                          key={`${day.toISOString()}-${time}`}
+                          date={day}
+                          time={time}
+                          schedule={schedule || undefined}
+                          therapist={therapist || undefined}
+                          isSelected={schedule ? selectedSessions.includes(schedule.id) : false}
+                          isDragOver={false}
+                          onScheduleClick={onScheduleClick}
+                          onDragStart={handleDragStart}
+                          onDragOver={handleDragOver}
+                          onDrop={handleCellDrop(day, time)}
+                          onSelectToggle={toggleSessionSelection}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>

@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -7,13 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Schedule, SESSION_DURATIONS, DURATION_LABELS } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { useScheduleValidation } from '@/hooks/useScheduleValidation';
-import ValidationDisplay from '@/components/ValidationDisplay';
+import { useConflictValidation } from '@/hooks/useConflictValidation';
 import SessionBasicFields from './SessionBasicFields';
 import SessionStatusField from './SessionStatusField';
 import SessionObservationsField from './SessionObservationsField';
 import SessionReasonField from './SessionReasonField';
 import SessionCancelButton from './SessionCancelButton';
+import ConflictWarning from './ConflictWarning';
+import LoadingSpinner from '@/components/ui/loading-spinner';
 
 interface SessionEditFormProps {
   formData: {
@@ -51,34 +51,41 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
   onClose
 }) => {
   const { user } = useAuth();
-  const { getTherapistById } = useData();
+  const { getTherapistById, children } = useData();
+  const { validateScheduleConflict } = useConflictValidation();
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [conflicts, setConflicts] = useState<any[]>([]);
   
   const therapist = formData.therapistId ? getTherapistById(formData.therapistId) : null;
   
-  // Validate the current form data
-  const validation = useScheduleValidation(
-    {
-      ...formData,
-      id: schedule?.id,
-      childId: schedule?.childId,
-      date,
-      time
-    },
-    therapist,
-    date,
-    time,
-    formData.duration
-  );
+  // Real-time conflict validation
+  useEffect(() => {
+    if (formData.therapistId && formData.duration) {
+      const child = schedule?.childId ? children.find(c => c.id === schedule.childId) : children[0];
+      if (child) {
+        const newConflicts = validateScheduleConflict({
+          date,
+          time,
+          therapistId: formData.therapistId,
+          childId: child.id,
+          duration: formData.duration
+        }, schedule?.id);
+        setConflicts(newConflicts);
+      }
+    }
+  }, [formData.therapistId, formData.duration, date, time, schedule?.id, validateScheduleConflict, children, schedule?.childId]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.activity || !formData.therapistId || !formData.duration) {
       return;
     }
 
-    // Check validation before submitting
-    if (!validation.isValid) {
+    // Check for critical conflicts
+    const hasErrors = conflicts.some(c => c.severity === 'error');
+    if (hasErrors) {
       return;
     }
 
@@ -93,7 +100,12 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
       return;
     }
 
-    onSubmit(formData);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const hasSignificantChanges = schedule && (
@@ -103,8 +115,11 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
     formData.duration !== (schedule.duration || 60)
   );
 
+  const isFormValid = formData.activity && formData.therapistId && formData.duration && 
+                     !conflicts.some(c => c.severity === 'error');
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <SessionBasicFields
         formData={formData}
         setFormData={setFormData}
@@ -118,6 +133,7 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
         <Select
           value={formData.duration.toString()}
           onValueChange={(value) => setFormData(prev => ({ ...prev, duration: parseInt(value) }))}
+          disabled={isSubmitting}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione a duração" />
@@ -132,9 +148,9 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
         </Select>
       </div>
 
-      {/* Validation Display */}
-      {formData.therapistId && (
-        <ValidationDisplay validation={validation} />
+      {/* Conflict Warning */}
+      {conflicts.length > 0 && (
+        <ConflictWarning conflicts={conflicts} />
       )}
 
       {schedule && (
@@ -156,7 +172,7 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
         />
       )}
 
-      <DialogFooter className="flex justify-between">
+      <DialogFooter className="flex justify-between pt-6">
         <div>
           {schedule && user?.role === 'moderator' && (
             <SessionCancelButton
@@ -166,16 +182,28 @@ const SessionEditForm: React.FC<SessionEditFormProps> = ({
             />
           )}
         </div>
-        <div className="flex space-x-2">
-          <Button type="button" variant="outline" onClick={onClose}>
+        <div className="flex space-x-3">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
             Cancelar
           </Button>
           <Button 
             type="submit" 
-            disabled={!validation.isValid}
-            className={!validation.isValid ? 'opacity-50 cursor-not-allowed' : ''}
+            disabled={!isFormValid || isSubmitting}
+            className="min-w-[120px] hover-scale"
           >
-            {schedule ? 'Atualizar' : 'Criar'} Sessão
+            {isSubmitting ? (
+              <div className="flex items-center space-x-2">
+                <LoadingSpinner size="sm" />
+                <span>Salvando...</span>
+              </div>
+            ) : (
+              `${schedule ? 'Atualizar' : 'Criar'} Sessão`
+            )}
           </Button>
         </div>
       </DialogFooter>
