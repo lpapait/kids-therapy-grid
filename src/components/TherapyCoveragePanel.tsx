@@ -5,13 +5,21 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Child, TherapyCoverage } from '@/types';
 import { Activity, Clock, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { ScheduleSuggestionButton } from '@/components/ScheduleSuggestion';
 
 interface TherapyCoveragePanelProps {
   child: Child | null;
   coverageData: TherapyCoverage[];
+  selectedWeek?: Date;
+  onScheduleCreated?: () => void;
 }
 
-const TherapyCoveragePanel: React.FC<TherapyCoveragePanelProps> = ({ child, coverageData }) => {
+const TherapyCoveragePanel: React.FC<TherapyCoveragePanelProps> = ({ 
+  child, 
+  coverageData, 
+  selectedWeek = new Date(),
+  onScheduleCreated = () => {}
+}) => {
   // Validação de segurança para child
   if (!child) {
     return (
@@ -117,6 +125,13 @@ const TherapyCoveragePanel: React.FC<TherapyCoveragePanelProps> = ({ child, cove
                   Nenhuma sessão agendada
                 </p>
               )}
+              
+              <ScheduleSuggestionButton
+                child={child}
+                therapy={therapy}
+                selectedWeek={selectedWeek}
+                onScheduleCreated={onScheduleCreated}
+              />
             </div>
           ))
         )}

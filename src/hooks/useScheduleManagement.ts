@@ -146,6 +146,10 @@ export const useScheduleManagement = () => {
     }
   }, 200);
 
+  const forceRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   return {
     // State
     children,
@@ -169,6 +173,7 @@ export const useScheduleManagement = () => {
     handleCloseModal,
     handleDuplicateWeek,
     handleQuickAction,
-    handleAlertClick
+    handleAlertClick,
+    forceRefresh
   };
 };

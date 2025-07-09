@@ -29,7 +29,8 @@ const ScheduleManagementLayout = () => {
     handleCloseModal,
     handleDuplicateWeek,
     handleQuickAction,
-    handleAlertClick
+    handleAlertClick,
+    forceRefresh
   } = useScheduleManagement();
 
   const therapyCoverage = useTherapyCoverage(debouncedSelectedChild, debouncedSelectedWeek);
@@ -66,6 +67,7 @@ const ScheduleManagementLayout = () => {
                 hasEditingSession={!!editingSession?.schedule}
                 onQuickAction={handleQuickAction}
                 onAlertClick={handleAlertClick}
+                onScheduleCreated={forceRefresh}
               />
             </LazyPanel>
 

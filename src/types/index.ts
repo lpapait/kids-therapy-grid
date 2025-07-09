@@ -189,3 +189,17 @@ export const BRAZILIAN_STATES = [
   'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI',
   'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
+
+export interface ScheduleSuggestion {
+  id: string;
+  dayOfWeek: number;
+  date: Date;
+  time: string;
+  therapistId: string;
+  therapistName: string;
+  therapistWorkload: number;
+  maxWorkload: number;
+  priority: number;
+  available: boolean;
+  conflictReason?: string;
+}

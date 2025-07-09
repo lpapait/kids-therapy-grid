@@ -99,6 +99,28 @@ const mockTherapists: Therapist[] = [
     color: '#F97316', // Laranja
     weeklyWorkloadHours: 40,
     createdAt: new Date()
+  },
+  {
+    id: '4',
+    name: 'Maria Silva',
+    licenseNumber: 'FONO-11111',
+    education: 'Fonoaudiologia - UFRJ',
+    professionalType: 'Fonoaudiólogo',
+    specialties: ['Fonoaudiologia'],
+    color: '#10B981', // Verde
+    weeklyWorkloadHours: 30,
+    createdAt: new Date()
+  },
+  {
+    id: '5',
+    name: 'Pedro Costa',
+    licenseNumber: 'MUSICO-22222',
+    education: 'Musicoterapia - UNESP',
+    professionalType: 'Musicoterapeuta',
+    specialties: ['Musicoterapia'],
+    color: '#8B5CF6', // Roxo
+    weeklyWorkloadHours: 25,
+    createdAt: new Date()
   }
 ];
 

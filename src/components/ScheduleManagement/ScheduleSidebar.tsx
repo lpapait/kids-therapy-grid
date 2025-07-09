@@ -14,6 +14,7 @@ interface ScheduleSidebarProps {
   hasEditingSession: boolean;
   onQuickAction: (action: string) => void;
   onAlertClick: (therapistId: string) => void;
+  onScheduleCreated?: () => void;
 }
 
 // Mock data for weekly trend - in a real app this would come from historical data
@@ -33,7 +34,8 @@ const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
   selectedWeek,
   hasEditingSession,
   onQuickAction,
-  onAlertClick
+  onAlertClick,
+  onScheduleCreated = () => {}
 }) => {
   // Validação de dados
   const safeCoverageData = Array.isArray(coverageData) ? coverageData : [];
@@ -44,6 +46,8 @@ const ScheduleSidebar: React.FC<ScheduleSidebarProps> = ({
       <TherapyCoveragePanel
         child={child}
         coverageData={safeCoverageData}
+        selectedWeek={selectedWeek}
+        onScheduleCreated={onScheduleCreated}
       />
       
       {hasEditingSession && selectedTherapist && (
