@@ -6,31 +6,34 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Clock, User, Calendar, CheckCircle, AlertTriangle, XCircle, Circle, FileText } from 'lucide-react';
 
+interface TherapistScheduleOverview {
+  therapistId: string;
+  therapistName: string;
+  specialties: string[];
+  color: string;
+  hoursScheduled: number;
+  maxHours: number;
+  percentage: number;
+  status: 'available' | 'near_limit' | 'overloaded';
+  weeklyGrid: Array<Array<{
+    date: Date;
+    time: string;
+    session?: {
+      id: string;
+      childName: string;
+      activity: string;
+      specialty: string;
+      status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
+    };
+    isEmpty: boolean;
+  }>>;
+  availableSlots: number;
+  sessionsCount: number;
+  administrativeHours: number;
+}
+
 interface TherapistOverviewCardProps {
-  therapist: {
-    therapistId: string;
-    therapistName: string;
-    specialties: string[];
-    color: string;
-    hoursScheduled: number;
-    maxHours: number;
-    percentage: number;
-    status: 'available' | 'near_limit' | 'overloaded';
-    weeklyGrid: Array<Array<{
-      date: Date;
-      time: string;
-      session?: {
-        id: string;
-        childName: string;
-        activity: string;
-        specialty: string;
-        status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
-      };
-      isEmpty: boolean;
-    }>>;
-    availableSlots: number;
-    sessionsCount: number;
-  };
+  therapist: TherapistScheduleOverview;
   onSessionClick?: (sessionId: string) => void;
   onSlotClick?: (therapistId: string, date: Date, time: string) => void;
 }
