@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Calendar, User } from 'lucide-react';
@@ -17,11 +17,20 @@ const TherapistAgendaModal: React.FC = () => {
     ? getTherapistById(therapistAgendaModal.therapistId) 
     : null;
 
+  // Sincronizar com a semana selecionada principal quando o modal abre
+  useEffect(() => {
+    if (therapistAgendaModal.isOpen && therapistAgendaModal.therapistId) {
+      console.log('Modal opened for therapist:', therapistAgendaModal.therapistId);
+      console.log('Selected week:', therapistAgendaModal.selectedWeek);
+    }
+  }, [therapistAgendaModal.isOpen, therapistAgendaModal.therapistId, therapistAgendaModal.selectedWeek]);
+
   const handleClose = () => {
     dispatch({ type: 'CLOSE_THERAPIST_AGENDA' });
   };
 
   const handleWeekChange = (date: Date) => {
+    console.log('Week changed to:', date);
     dispatch({ type: 'SET_THERAPIST_AGENDA_WEEK', payload: date });
   };
 

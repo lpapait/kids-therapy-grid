@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, User } from 'lucide-react';
-import { getWeekDays, getTimeSlots, getDayName } from '@/lib/dateUtils';
+import { getWeekDays, getTimeSlots, getDayName, formatDateForComparison } from '@/lib/dateUtils';
 import { Schedule, Therapist, Child } from '@/types';
 import { AgendaStats } from '../../../types/agenda.types';
 import GridCell from './GridCell';
@@ -35,11 +35,29 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
   const weekDays = getWeekDays(selectedWeek);
   const timeSlots = getTimeSlots();
 
+  console.log('=== WEEKLY GRID DEBUG ===');
+  console.log('Therapist:', therapist.name);
+  console.log('Week schedules received:', weekSchedules.length);
+  console.log('Week days:', weekDays.map(d => formatDateForComparison(d)));
+  
+  weekSchedules.forEach(schedule => {
+    console.log(`Schedule: ${formatDateForComparison(schedule.date)} ${schedule.time} - ${schedule.activity}`);
+  });
+
   const getScheduleForSlot = (date: Date, time: string) => {
-    return weekSchedules.find(schedule => 
-      format(schedule.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') &&
-      schedule.time === time
-    );
+    const dateStr = formatDateForComparison(date);
+    const schedule = weekSchedules.find(schedule => {
+      const scheduleDate = formatDateForComparison(schedule.date);
+      const matches = scheduleDate === dateStr && schedule.time === time;
+      
+      if (matches) {
+        console.log(`Found match: ${scheduleDate} ${schedule.time} - ${schedule.activity}`);
+      }
+      
+      return matches;
+    });
+    
+    return schedule;
   };
 
   return (
@@ -109,6 +127,15 @@ const WeeklyGrid: React.FC<WeeklyGridProps> = ({
             </div>
           </div>
         </div>
+        
+        {/* Debug info - remover em produção */}
+        {weekSchedules.length === 0 && (
+          <div className="p-4 bg-yellow-50 border-t text-sm text-yellow-800">
+            <strong>Debug:</strong> Nenhum agendamento encontrado para {therapist.name} nesta semana.
+            <br />
+            Semana: {format(selectedWeek, 'dd/MM/yyyy', { locale: ptBR })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

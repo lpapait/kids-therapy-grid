@@ -1,60 +1,25 @@
-import { format, startOfWeek, addDays, isSameDay, parseISO } from 'date-fns';
+
+import { format, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export const getWeekDays = (date: Date) => {
-  const start = startOfWeek(date, { weekStartsOn: 1 }); // Segunda-feira
-  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-};
-
-export const formatWeekRange = (date: Date) => {
-  const days = getWeekDays(date);
-  const start = format(days[0], 'dd/MM', { locale: ptBR });
-  const end = format(days[6], 'dd/MM/yyyy', { locale: ptBR });
-  return `${start} - ${end}`;
+export const getWeekDays = (selectedWeek: Date) => {
+  const startDay = startOfWeek(selectedWeek, { weekStartsOn: 1 }); // Segunda-feira
+  return Array.from({ length: 7 }, (_, i) => addDays(startDay, i));
 };
 
 export const getTimeSlots = () => {
+  // Gerar horários simples de 08:00 a 17:00
   const slots = [];
-  for (let hour = 7; hour <= 17; hour++) {
-    const startTime = `${hour.toString().padStart(2, '0')}:30`;
-    const endTime = `${(hour + 1).toString().padStart(2, '0')}:30`;
-    slots.push(`${startTime}-${endTime}`);
+  for (let hour = 8; hour <= 17; hour++) {
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
   }
   return slots;
 };
 
 export const getDayName = (date: Date) => {
-  return format(date, 'EEEE', { locale: ptBR });
+  return format(date, 'EEE', { locale: ptBR });
 };
 
-export const formatDate = (date: Date) => {
-  return format(date, 'dd/MM/yyyy', { locale: ptBR });
-};
-
-export const isSameWeek = (date1: Date, date2: Date) => {
-  const week1 = getWeekDays(date1);
-  const week2 = getWeekDays(date2);
-  return isSameDay(week1[0], week2[0]);
-};
-
-export const addWeeks = (date: Date, weeks: number): Date => {
-  const result = new Date(date);
-  result.setDate(result.getDate() + (weeks * 7));
-  return result;
-};
-
-// Export addDays from date-fns for external use
-export { addDays } from 'date-fns';
-
-export const calculateAge = (birthDate: Date): number => {
-  const today = new Date();
-  const birth = new Date(birthDate);
-  let age = today.getFullYear() - birth.getFullYear();
-  
-  const monthDiff = today.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-  
-  return age;
+export const formatDateForComparison = (date: Date) => {
+  return format(date, 'yyyy-MM-dd');
 };

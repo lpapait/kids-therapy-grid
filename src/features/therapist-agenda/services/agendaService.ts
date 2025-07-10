@@ -13,13 +13,32 @@ export class AgendaService {
   ): Schedule[] {
     const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 1 });
+    
+    console.log('=== AGENDA SERVICE DEBUG ===');
+    console.log('Total schedules:', schedules.length);
+    console.log('Filtering for therapist:', therapistId);
+    console.log('Week range:', format(weekStart, 'yyyy-MM-dd'), 'to', format(weekEnd, 'yyyy-MM-dd'));
 
-    return schedules.filter(schedule => {
-      // Filter by therapist and week
-      if (schedule.therapistId !== therapistId) return false;
-      if (!isWithinInterval(schedule.date, { start: weekStart, end: weekEnd })) return false;
+    const therapistSchedules = schedules.filter(schedule => {
+      const matchesTherapist = schedule.therapistId === therapistId;
+      
+      if (matchesTherapist) {
+        const scheduleDate = format(schedule.date, 'yyyy-MM-dd');
+        const isInWeek = isWithinInterval(schedule.date, { start: weekStart, end: weekEnd });
+        console.log(`Schedule ${schedule.id}: ${scheduleDate}, time: ${schedule.time}, activity: ${schedule.activity}, inWeek: ${isInWeek}`);
+      }
+      
+      return matchesTherapist;
+    });
 
-      // Apply filters
+    console.log(`Found ${therapistSchedules.length} schedules for therapist ${therapistId}`);
+
+    const filteredSchedules = therapistSchedules.filter(schedule => {
+      // Filter by week
+      const isInWeek = isWithinInterval(schedule.date, { start: weekStart, end: weekEnd });
+      if (!isInWeek) return false;
+
+      // Apply additional filters
       if (filters.status.length > 0 && !filters.status.includes(schedule.status)) return false;
       
       if (filters.specialties.length > 0) {
@@ -43,6 +62,11 @@ export class AgendaService {
 
       return true;
     });
+
+    console.log(`Final filtered schedules: ${filteredSchedules.length}`);
+    console.log('=== END DEBUG ===');
+
+    return filteredSchedules;
   }
 
   static calculateStats(schedules: Schedule[], therapist: Therapist): AgendaStats {
