@@ -1,17 +1,24 @@
-
 import React, { useState } from 'react';
 import { useTeamScheduleOverview } from '@/hooks/useTeamScheduleOverview';
 import { useToast } from '@/hooks/use-toast';
 import OverviewFilters from './TeamScheduleOverview/components/OverviewFilters';
 import TherapistOverviewCard from './TeamScheduleOverview/components/TherapistOverviewCard';
 import TeamInsightsPanel from './TeamScheduleOverview/components/TeamInsightsPanel';
+import AdministrativeScheduleModal from './TeamScheduleOverview/components/AdministrativeScheduleModal';
+import AdministrativeStatsPanel from './TeamScheduleOverview/components/AdministrativeStatsPanel';
+import AdministrativeScheduleSuggester from './TeamScheduleOverview/components/AdministrativeScheduleSuggester';
 import { CalendarDays, FileText } from 'lucide-react';
+import { startOfWeek, addDays } from 'date-fns';
 
 const TeamScheduleOverview: React.FC = () => {
   const [selectedWeek, setSelectedWeek] = useState(new Date());
   const [specialtyFilter, setSpecialtyFilter] = useState('');
   const [therapistSearch, setTherapistSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [selectedTherapistId, setSelectedTherapistId] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState('');
   const { toast } = useToast();
 
   const { therapistOverviews, teamInsights, isLoading } = useTeamScheduleOverview(
@@ -47,10 +54,52 @@ const TeamScheduleOverview: React.FC = () => {
   };
 
   const handleSlotClick = (therapistId: string, date: Date, time: string) => {
-    toast({
-      title: 'Novo agendamento',
-      description: `Criando sessão para ${date.toLocaleDateString()} às ${time}`
-    });
+    setSelectedTherapistId(therapistId);
+    setSelectedDate(date);
+    setSelectedTime(time);
+    setAdminModalOpen(true);
+  };
+
+  const handleAdminScheduleClick = (therapistId: string, date: Date, time: string) => {
+    handleSlotClick(therapistId, date, time);
+  };
+
+  const generateAdminSuggestions = (therapistId: string) => {
+    const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 });
+    return [
+      {
+        date: addDays(weekStart, 1),
+        time: '17:00',
+        reason: 'Horário ideal após sessões clínicas para relatórios',
+        priority: 'high' as const,
+        activityType: 'Relatórios Clínicos',
+        estimatedDuration: 60
+      },
+      {
+        date: addDays(weekStart, 3),
+        time: '16:00',
+        reason: 'Slot livre disponível para planejamento semanal',
+        priority: 'medium' as const,
+        activityType: 'Planejamento Semanal',
+        estimatedDuration: 90
+      }
+    ];
+  };
+
+  const calculateAdminStats = () => {
+    const totalAdminHours = therapistOverviews.reduce((sum, t) => sum + (t.administrativeHours || 0), 0);
+    const requiredAdminHours = therapistOverviews.length * 4; // 4h por terapeuta
+    const therapistsWithDeficit = therapistOverviews.filter(t => (t.administrativeHours || 0) < 4).length;
+    
+    return {
+      totalAdminHours,
+      requiredAdminHours,
+      completionPercentage: Math.round((totalAdminHours / requiredAdminHours) * 100),
+      therapistsWithDeficit,
+      averageAdminTime: totalAdminHours / therapistOverviews.length,
+      mostCommonActivity: 'Relatórios Clínicos',
+      upcomingDeadlines: 3
+    };
   };
 
   const handleRedistributeLoad = () => {
@@ -103,20 +152,67 @@ const TeamScheduleOverview: React.FC = () => {
         selectedWeek={selectedWeek}
         onWeekChange={setSelectedWeek}
         specialtyFilter={specialtyFilter}
-        onSpecialtyChange={handleSpecialtyChange}
+        onSpecialtyChange={(specialty) => setSpecialtyFilter(specialty === 'Todas' ? '' : specialty)}
         therapistSearch={therapistSearch}
         onTherapistSearchChange={setTherapistSearch}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        onExportReport={handleExportReport}
+        onExportReport={() => {
+          toast({
+            title: 'Exportando relatório...',
+            description: 'O relatório semanal da equipe está sendo gerado.'
+          });
+        }}
       />
 
-      {/* Insights da Equipe */}
-      <TeamInsightsPanel
-        insights={teamInsights}
-        onRedistributeLoad={handleRedistributeLoad}
-        onFindAvailableSlots={handleFindAvailableSlots}
-      />
+      {/* Painéis de Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TeamInsightsPanel
+          insights={teamInsights}
+          onRedistributeLoad={() => {
+            toast({
+              title: 'Redistribuindo carga',
+              description: 'Analisando possibilidades de redistribuição...'
+            });
+          }}
+          onFindAvailableSlots={() => {
+            toast({
+              title: 'Buscando slots',
+              description: 'Exibindo todos os horários disponíveis da equipe.'
+            });
+          }}
+        />
+        
+        <AdministrativeStatsPanel
+          stats={calculateAdminStats()}
+          onViewDetails={() => {
+            toast({
+              title: 'Relatório administrativo',
+              description: 'Carregando relatório detalhado das atividades administrativas.'
+            });
+          }}
+        />
+      </div>
+
+      {/* Sugestões Administrativas */}
+      {therapistOverviews.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Sugestões de Agendamento Administrativo
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {therapistOverviews.slice(0, 2).map(therapist => (
+              <AdministrativeScheduleSuggester
+                key={therapist.therapistId}
+                therapistId={therapist.therapistId}
+                therapistName={therapist.therapistName}
+                suggestions={generateAdminSuggestions(therapist.therapistId)}
+                onScheduleClick={handleAdminScheduleClick}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Lista/Grid de Terapeutas */}
       <div className="space-y-4">
@@ -138,7 +234,12 @@ const TeamScheduleOverview: React.FC = () => {
               <TherapistOverviewCard
                 key={therapist.therapistId}
                 therapist={therapist}
-                onSessionClick={handleSessionClick}
+                onSessionClick={(sessionId) => {
+                  toast({
+                    title: 'Abrindo sessão',
+                    description: `Carregando detalhes da sessão ${sessionId}`
+                  });
+                }}
                 onSlotClick={handleSlotClick}
               />
             ))}
@@ -149,7 +250,12 @@ const TeamScheduleOverview: React.FC = () => {
               <TherapistOverviewCard
                 key={therapist.therapistId}
                 therapist={therapist}
-                onSessionClick={handleSessionClick}
+                onSessionClick={(sessionId) => {
+                  toast({
+                    title: 'Abrindo sessão',
+                    description: `Carregando detalhes da sessão ${sessionId}`
+                  });
+                }}
                 onSlotClick={handleSlotClick}
               />
             ))}
@@ -168,6 +274,15 @@ const TeamScheduleOverview: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de Agendamento Administrativo */}
+      <AdministrativeScheduleModal
+        isOpen={adminModalOpen}
+        onClose={() => setAdminModalOpen(false)}
+        therapistId={selectedTherapistId}
+        date={selectedDate}
+        time={selectedTime}
+      />
     </div>
   );
 };
