@@ -17,6 +17,11 @@ interface TherapistAgendaState {
     isOpen: boolean;
     therapistId?: string;
   };
+  therapistAgendaModal: {
+    isOpen: boolean;
+    therapistId?: string;
+    selectedWeek: Date;
+  };
   calendar: {
     selectedDate: Date;
     selectedDay?: Date;
@@ -41,6 +46,9 @@ type TherapistAgendaAction =
   | { type: 'CLOSE_QUICK_SCHEDULE' }
   | { type: 'OPEN_AGENDA_PREVIEW'; payload: string }
   | { type: 'CLOSE_AGENDA_PREVIEW' }
+  | { type: 'OPEN_THERAPIST_AGENDA'; payload: { therapistId: string; selectedWeek?: Date } }
+  | { type: 'CLOSE_THERAPIST_AGENDA' }
+  | { type: 'SET_THERAPIST_AGENDA_WEEK'; payload: Date }
   | { type: 'RESET_FILTERS' }
   | { type: 'SET_CALENDAR_DATE'; payload: Date }
   | { type: 'SET_SELECTED_DAY'; payload: Date | undefined }
@@ -64,6 +72,10 @@ const initialState: TherapistAgendaState = {
   },
   agendaPreview: {
     isOpen: false
+  },
+  therapistAgendaModal: {
+    isOpen: false,
+    selectedWeek: new Date()
   },
   calendar: {
     selectedDate: new Date(),
@@ -127,6 +139,31 @@ function therapistAgendaReducer(state: TherapistAgendaState, action: TherapistAg
       return {
         ...state,
         agendaPreview: { isOpen: false }
+      };
+    case 'OPEN_THERAPIST_AGENDA':
+      return {
+        ...state,
+        therapistAgendaModal: {
+          isOpen: true,
+          therapistId: action.payload.therapistId,
+          selectedWeek: action.payload.selectedWeek || state.selectedWeek
+        }
+      };
+    case 'CLOSE_THERAPIST_AGENDA':
+      return {
+        ...state,
+        therapistAgendaModal: {
+          ...state.therapistAgendaModal,
+          isOpen: false
+        }
+      };
+    case 'SET_THERAPIST_AGENDA_WEEK':
+      return {
+        ...state,
+        therapistAgendaModal: {
+          ...state.therapistAgendaModal,
+          selectedWeek: action.payload
+        }
       };
     case 'RESET_FILTERS':
       return {

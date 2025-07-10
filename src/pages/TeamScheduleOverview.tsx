@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useTeamScheduleOverview } from '@/hooks/useTeamScheduleOverview';
 import { useToast } from '@/hooks/use-toast';
@@ -6,9 +7,7 @@ import TherapistOverviewCard from './TeamScheduleOverview/components/TherapistOv
 import TeamInsightsPanel from './TeamScheduleOverview/components/TeamInsightsPanel';
 import AdministrativeScheduleModal from './TeamScheduleOverview/components/AdministrativeScheduleModal';
 import AdministrativeStatsPanel from './TeamScheduleOverview/components/AdministrativeStatsPanel';
-import AdministrativeScheduleSuggester from './TeamScheduleOverview/components/AdministrativeScheduleSuggester';
 import { CalendarDays, FileText } from 'lucide-react';
-import { startOfWeek, addDays } from 'date-fns';
 
 const TeamScheduleOverview: React.FC = () => {
   const [selectedWeek, setSelectedWeek] = useState(new Date());
@@ -58,32 +57,6 @@ const TeamScheduleOverview: React.FC = () => {
     setSelectedDate(date);
     setSelectedTime(time);
     setAdminModalOpen(true);
-  };
-
-  const handleAdminScheduleClick = (therapistId: string, date: Date, time: string) => {
-    handleSlotClick(therapistId, date, time);
-  };
-
-  const generateAdminSuggestions = (therapistId: string) => {
-    const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 });
-    return [
-      {
-        date: addDays(weekStart, 1),
-        time: '17:00',
-        reason: 'Horário ideal após sessões clínicas para relatórios',
-        priority: 'high' as const,
-        activityType: 'Relatórios Clínicos',
-        estimatedDuration: 60
-      },
-      {
-        date: addDays(weekStart, 3),
-        time: '16:00',
-        reason: 'Slot livre disponível para planejamento semanal',
-        priority: 'medium' as const,
-        activityType: 'Planejamento Semanal',
-        estimatedDuration: 90
-      }
-    ];
   };
 
   const calculateAdminStats = () => {
@@ -193,26 +166,6 @@ const TeamScheduleOverview: React.FC = () => {
           }}
         />
       </div>
-
-      {/* Sugestões Administrativas */}
-      {therapistOverviews.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Sugestões de Agendamento Administrativo
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {therapistOverviews.slice(0, 2).map(therapist => (
-              <AdministrativeScheduleSuggester
-                key={therapist.therapistId}
-                therapistId={therapist.therapistId}
-                therapistName={therapist.therapistName}
-                suggestions={generateAdminSuggestions(therapist.therapistId)}
-                onScheduleClick={handleAdminScheduleClick}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Lista/Grid de Terapeutas */}
       <div className="space-y-4">

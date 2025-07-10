@@ -15,15 +15,6 @@ const TherapistOverviewGrid: React.FC<TherapistOverviewGridProps> = ({
 }) => {
   const { toast } = useToast();
 
-  const handleViewAgenda = (therapistId: string) => {
-    // TODO: Implement navigation to therapist's detailed agenda
-    const therapist = cards.find(c => c.therapist.id === therapistId)?.therapist;
-    toast({
-      title: "Visualizar Agenda",
-      description: `Abrindo agenda de ${therapist?.name || 'terapeuta'}`,
-    });
-  };
-
   const handleQuickSchedule = (therapistId: string) => {
     // TODO: Implement quick scheduling modal
     const therapist = cards.find(c => c.therapist.id === therapistId)?.therapist;
@@ -83,7 +74,6 @@ const TherapistOverviewGrid: React.FC<TherapistOverviewGridProps> = ({
         <TherapistCard
           key={card.therapist.id}
           card={card}
-          onViewAgenda={handleViewAgenda}
           onQuickSchedule={handleQuickSchedule}
         />
       ))}

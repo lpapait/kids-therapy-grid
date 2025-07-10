@@ -13,6 +13,7 @@ import ConsolidatedCapacity from '../ConsolidatedCapacity';
 import CalendarView from '../CalendarView';
 import QuickScheduleModal from '../QuickScheduleModal';
 import AgendaPreviewModal from '../AgendaPreviewModal';
+import TherapistAgendaModal from '../TherapistAgendaModal';
 import AgendaViewer from '@/features/therapist-agenda/components/AgendaViewer';
 
 const TherapistAgendaContent: React.FC = () => {
@@ -189,6 +190,7 @@ const TherapistAgendaContent: React.FC = () => {
       {/* Modals */}
       <QuickScheduleModal />
       <AgendaPreviewModal />
+      <TherapistAgendaModal />
     </div>
   );
 };

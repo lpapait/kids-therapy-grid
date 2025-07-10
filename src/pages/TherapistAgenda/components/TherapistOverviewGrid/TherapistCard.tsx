@@ -7,18 +7,26 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Calendar, Clock, User, Eye, Phone, MessageSquare } from 'lucide-react';
 import { TherapistOverviewCard } from '../../types/therapist-agenda.types';
+import { useTherapistAgendaContext } from '../../context/TherapistAgendaContext';
 
 interface TherapistCardProps {
   card: TherapistOverviewCard;
-  onViewAgenda: (therapistId: string) => void;
   onQuickSchedule: (therapistId: string) => void;
 }
 
 const TherapistCard: React.FC<TherapistCardProps> = ({
   card,
-  onViewAgenda,
   onQuickSchedule
 }) => {
+  const { dispatch } = useTherapistAgendaContext();
+
+  const handleViewAgenda = (therapistId: string) => {
+    dispatch({ 
+      type: 'OPEN_THERAPIST_AGENDA', 
+      payload: { therapistId }
+    });
+  };
+
   const getStatusColor = () => {
     switch (card.status) {
       case 'available': return 'bg-green-500';
@@ -166,7 +174,7 @@ const TherapistCard: React.FC<TherapistCardProps> = ({
             size="sm"
             variant="outline"
             className="flex-1 text-xs"
-            onClick={() => onViewAgenda(card.therapist.id)}
+            onClick={() => handleViewAgenda(card.therapist.id)}
           >
             <Eye className="h-3 w-3 mr-1" />
             Ver Agenda
