@@ -1,317 +1,13 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Child, Therapist, Schedule, ScheduleTemplate } from '@/types';
 import { assignTherapistColor } from '@/lib/therapistColors';
-
-interface DataContextType {
-  children: Child[];
-  therapists: Therapist[];
-  schedules: Schedule[];
-  scheduleTemplates: ScheduleTemplate[];
-  
-  addChild: (child: Omit<Child, 'id' | 'createdAt'>) => void;
-  addTherapist: (therapist: Omit<Therapist, 'id' | 'createdAt' | 'color' | 'weeklyWorkloadHours'>) => void;
-  updateTherapist: (id: string, updates: Partial<Therapist>) => void;
-  deleteTherapist: (id: string) => void;
-  addSchedule: (schedule: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateSchedule: (id: string, updates: Partial<Schedule>, reason?: string) => void;
-  addScheduleTemplate: (template: Omit<ScheduleTemplate, 'id'>) => void;
-  getChildById: (id: string) => Child | undefined;
-  getTherapistById: (id: string) => Therapist | undefined;
-}
+import { mockChildren, mockTherapists } from './mockData';
+import { createMockSchedules } from './mockSchedules';
+import { DataContextType } from './dataContextTypes';
+import { generateId, normalizeDate } from './dataContextUtils';
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
-
-// Mock data for demonstration
-const mockChildren: Child[] = [
-  {
-    id: '1',
-    name: 'Ana Beatriz Costa',
-    birthDate: new Date('2018-03-15'),
-    gender: 'female',
-    medications: 'Ritalina 10mg - manhã',
-    diagnosis: 'TEA - Transtorno do Espectro Autista',
-    guardians: [
-      {
-        name: 'Carlos Costa',
-        relationship: 'Pai',
-        phone: '(11) 99999-1111',
-        email: 'carlos@email.com'
-      },
-      {
-        name: 'Beatriz Costa',
-        relationship: 'Mãe',
-        phone: '(11) 99999-2222',
-        email: 'beatriz@email.com'
-      }
-    ],
-    weeklyTherapies: [
-      { specialty: 'Fonoaudiologia', hoursRequired: 4 },
-      { specialty: 'Musicoterapia', hoursRequired: 6 },
-      { specialty: 'Terapia Ocupacional', hoursRequired: 3 }
-    ],
-    createdAt: new Date(),
-    createdBy: '1'
-  },
-  {
-    id: '2',
-    name: 'Pedro Henrique Silva',
-    birthDate: new Date('2019-07-20'),
-    gender: 'male',
-    diagnosis: 'Atraso no desenvolvimento neuropsicomotor',
-    guardians: [
-      {
-        name: 'Mariana Silva',
-        relationship: 'Mãe',
-        phone: '(11) 88888-3333',
-        email: 'mariana@email.com'
-      }
-    ],
-    weeklyTherapies: [
-      { specialty: 'Fisioterapia', hoursRequired: 5 },
-      { specialty: 'Terapia Ocupacional', hoursRequired: 2 }
-    ],
-    createdAt: new Date(),
-    createdBy: '1'
-  }
-];
-
-const mockTherapists: Therapist[] = [
-  {
-    id: '2',
-    name: 'João Santos',
-    licenseNumber: 'TO-12345',
-    education: 'Terapia Ocupacional - UFMG',
-    professionalType: 'Terapeuta Ocupacional',
-    specialties: ['Terapia Ocupacional', 'Integração Sensorial'],
-    color: '#3B82F6', // Azul
-    weeklyWorkloadHours: 35,
-    createdAt: new Date()
-  },
-  {
-    id: '3',
-    name: 'Laura Oliveira',
-    licenseNumber: 'FISIO-67890',
-    education: 'Fisioterapia - USP',
-    professionalType: 'Fisioterapeuta',
-    specialties: ['Fisioterapia', 'Neurologia Pediátrica'],
-    color: '#F97316', // Laranja
-    weeklyWorkloadHours: 40,
-    createdAt: new Date()
-  },
-  {
-    id: '4',
-    name: 'Maria Silva',
-    licenseNumber: 'FONO-11111',
-    education: 'Fonoaudiologia - UFRJ',
-    professionalType: 'Fonoaudiólogo',
-    specialties: ['Fonoaudiologia'],
-    color: '#10B981', // Verde
-    weeklyWorkloadHours: 30,
-    createdAt: new Date()
-  },
-  {
-    id: '5',
-    name: 'Pedro Costa',
-    licenseNumber: 'MUSICO-22222',
-    education: 'Musicoterapia - UNESP',
-    professionalType: 'Musicoterapeuta',
-    specialties: ['Musicoterapia'],
-    color: '#8B5CF6', // Roxo
-    weeklyWorkloadHours: 25,
-    createdAt: new Date()
-  }
-];
-
-// Função para criar datas da semana atual
-const getWeekDates = () => {
-  const today = new Date();
-  const currentWeek = [];
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - today.getDay()); // Domingo
-
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(startOfWeek);
-    date.setDate(startOfWeek.getDate() + i);
-    date.setHours(0, 0, 0, 0);
-    currentWeek.push(date);
-  }
-  return currentWeek;
-};
-
-// Mock schedules com dados realistas para teste
-const createMockSchedules = (): Schedule[] => {
-  const weekDates = getWeekDates();
-  const schedules: Schedule[] = [];
-  let scheduleId = 1;
-
-  // Sessões regulares para João Santos (Terapeuta Ocupacional)
-  schedules.push(
-    {
-      id: `${scheduleId++}`,
-      childId: '1',
-      therapistId: '2',
-      date: weekDates[1], // Segunda
-      time: '09:00',
-      activity: 'Terapia Ocupacional',
-      duration: 60,
-      status: 'scheduled',
-      type: 'session',
-      observations: 'Trabalhar coordenação motora fina',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    },
-    {
-      id: `${scheduleId++}`,
-      childId: '2',
-      therapistId: '2',
-      date: weekDates[1], // Segunda
-      time: '14:00',
-      activity: 'Integração Sensorial',
-      duration: 60,
-      status: 'completed',
-      type: 'session',
-      observations: 'Sessão finalizada com sucesso',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    },
-    {
-      id: `${scheduleId++}`,
-      childId: '1',
-      therapistId: '2',
-      date: weekDates[3], // Quarta
-      time: '10:00',
-      activity: 'Terapia Ocupacional',
-      duration: 60,
-      status: 'scheduled',
-      type: 'session',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    },
-    // Tempo administrativo para João Santos
-    {
-      id: `${scheduleId++}`,
-      therapistId: '2',
-      date: weekDates[2], // Terça
-      time: '12:00',
-      activity: 'Elaboração de relatórios',
-      duration: 60,
-      status: 'scheduled',
-      type: 'administrative',
-      observations: 'Relatórios mensais de progresso',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    }
-  );
-
-  // Sessões para Laura Oliveira (Fisioterapeuta)
-  schedules.push(
-    {
-      id: `${scheduleId++}`,
-      childId: '2',
-      therapistId: '3',
-      date: weekDates[1], // Segunda
-      time: '08:00',
-      activity: 'Fisioterapia',
-      duration: 60,
-      status: 'scheduled',
-      type: 'session',
-      observations: 'Exercícios de fortalecimento',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    },
-    {
-      id: `${scheduleId++}`,
-      childId: '2',
-      therapistId: '3',
-      date: weekDates[4], // Quinta
-      time: '09:00',
-      activity: 'Neurologia Pediátrica',
-      duration: 60,
-      status: 'scheduled',
-      type: 'session',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    }
-  );
-
-  // Sessões para Maria Silva (Fonoaudiólogo)
-  schedules.push(
-    {
-      id: `${scheduleId++}`,
-      childId: '1',
-      therapistId: '4',
-      date: weekDates[2], // Terça
-      time: '09:00',
-      activity: 'Fonoaudiologia',
-      duration: 60,
-      status: 'scheduled',
-      type: 'session',
-      observations: 'Trabalhar articulação de fonemas',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    },
-    {
-      id: `${scheduleId++}`,
-      childId: '1',
-      therapistId: '4',
-      date: weekDates[5], // Sexta
-      time: '10:00',
-      activity: 'Fonoaudiologia',
-      duration: 60,
-      status: 'cancelled',
-      type: 'session',
-      observations: 'Cancelado - paciente com febre',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    }
-  );
-
-  // Sessões para Pedro Costa (Musicoterapeuta)
-  schedules.push(
-    {
-      id: `${scheduleId++}`,
-      childId: '1',
-      therapistId: '5',
-      date: weekDates[2], // Terça
-      time: '15:00',
-      activity: 'Musicoterapia',
-      duration: 60,
-      status: 'scheduled',
-      type: 'session',
-      observations: 'Trabalhar expressão através da música',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    },
-    {
-      id: `${scheduleId++}`,
-      childId: '1',
-      therapistId: '5',
-      date: weekDates[4], // Quinta
-      time: '16:00',
-      activity: 'Musicoterapia',
-      duration: 60,
-      status: 'rescheduled',
-      type: 'session',
-      observations: 'Remarcado para próxima semana',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      updatedBy: '1'
-    }
-  );
-
-  return schedules;
-};
-
-const generateId = () => Date.now().toString();
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [childrenData, setChildrenData] = useState<Child[]>(mockChildren);
@@ -341,7 +37,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...therapist,
       id: generateId(),
       color: assignTherapistColor(generateId(), existingColors),
-      weeklyWorkloadHours: 35, // Default workload hours
+      weeklyWorkloadHours: 35,
       createdAt: new Date()
     };
     setTherapists(prev => [...prev, newTherapist]);
@@ -357,15 +53,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTherapists(prev => prev.filter(therapist => therapist.id !== id));
   };
 
-  // MELHORADA: Função addSchedule com melhor normalização de data
   const addSchedule = (schedule: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) => {
-    // Normalizar a data para evitar problemas de timezone
-    const normalizedDate = new Date(schedule.date);
-    normalizedDate.setHours(0, 0, 0, 0);
+    const normalizedDate = normalizeDate(schedule.date);
     
     const newSchedule: Schedule = {
       ...schedule,
-      date: normalizedDate, // Usar data normalizada
+      date: normalizedDate,
       id: generateId(),
       createdAt: new Date(),
       updatedAt: new Date()
@@ -396,11 +89,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (schedule.id === id) {
         const updatedSchedule = { ...schedule, ...updates, updatedAt: new Date() };
         
-        // Normalizar data se foi atualizada
         if (updates.date) {
-          const normalizedDate = new Date(updates.date);
-          normalizedDate.setHours(0, 0, 0, 0);
-          updatedSchedule.date = normalizedDate;
+          updatedSchedule.date = normalizeDate(updates.date);
         }
         
         return updatedSchedule;
