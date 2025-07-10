@@ -61,7 +61,6 @@ const TherapistAgendaModal: React.FC = () => {
             <WeekSelector
               selectedWeek={therapistAgendaModal.selectedWeek}
               onWeekChange={handleWeekChange}
-              className="flex-1"
             />
           </div>
 
@@ -69,6 +68,7 @@ const TherapistAgendaModal: React.FC = () => {
             <WeeklyView
               therapistId={therapist.id}
               showWeekSelector={false}
+              selectedWeek={therapistAgendaModal.selectedWeek}
             />
           </div>
         </div>

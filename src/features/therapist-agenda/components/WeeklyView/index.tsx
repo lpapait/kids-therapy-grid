@@ -14,14 +14,20 @@ import WeeklyGrid from './WeeklyGrid';
 interface WeeklyViewProps {
   therapistId: string;
   showWeekSelector?: boolean;
+  selectedWeek?: Date;
 }
 
 const WeeklyView: React.FC<WeeklyViewProps> = ({ 
   therapistId, 
-  showWeekSelector = true 
+  showWeekSelector = true,
+  selectedWeek: externalSelectedWeek
 }) => {
   const { schedules, getTherapistById, getChildById } = useData();
-  const [selectedWeek, setSelectedWeek] = useState(new Date());
+  const [internalSelectedWeek, setInternalSelectedWeek] = useState(new Date());
+  
+  // Use external selectedWeek if provided, otherwise use internal state
+  const selectedWeek = externalSelectedWeek || internalSelectedWeek;
+  const setSelectedWeek = externalSelectedWeek ? () => {} : setInternalSelectedWeek;
   
   const therapist = getTherapistById(therapistId);
   const therapistWorkload = useTherapistWorkload(therapistId, selectedWeek);
